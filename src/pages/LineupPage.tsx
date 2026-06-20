@@ -335,7 +335,7 @@ function AggregateView({
                     <div className="flex items-start gap-4">
                       <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{pos}</span>
                       <div className="flex-1 space-y-2">
-                        {entries.map((entry, i) => {
+                        {entries.slice(0, 3).map((entry, i) => {
                           const player = playerById[entry.playerId];
                           if (!player) return null;
                           const pct = Math.round((entry.coachCount / numCoaches) * 100);
