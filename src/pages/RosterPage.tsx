@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plus, Trash, Users, PencilSimple, Phone, Envelope } from '@phosphor-icons/react';
 import { useStore } from '../store';
+import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -97,6 +98,7 @@ function PlayerForm({
 export function RosterPage() {
   const { id: seasonId } = useParams<{ id: string }>();
   const { players, addPlayer, updatePlayer, deletePlayer } = useStore();
+  const { user } = useAuthStore();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Player | null>(null);
 
@@ -179,7 +181,7 @@ export function RosterPage() {
         <Modal title="Add Player" onClose={() => setShowForm(false)}>
           <PlayerForm
             seasonId={seasonId}
-            onSubmit={(data) => { addPlayer(data); setShowForm(false); }}
+            onSubmit={(data) => { if (user) addPlayer(data, user.id); setShowForm(false); }}
             onCancel={() => setShowForm(false)}
           />
         </Modal>

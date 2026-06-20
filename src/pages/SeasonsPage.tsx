@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash, List, ArrowRight } from '@phosphor-icons/react';
 import { useStore } from '../store';
+import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -10,13 +11,15 @@ import type { Season } from '../types';
 
 export function SeasonsPage() {
   const { seasons, addSeason, deleteSeason } = useStore();
+  const { user } = useAuthStore();
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
-  const handleAdd = (data: Omit<Season, 'id' | 'createdAt'>) => {
-    const s = addSeason(data);
+  const handleAdd = async (data: Omit<Season, 'id' | 'createdAt'>) => {
+    if (!user) return;
+    const s = await addSeason(data, user.id);
     setShowForm(false);
-    navigate(`/seasons/${s.id}`);
+    if (s) navigate(`/seasons/${s.id}`);
   };
 
   return (

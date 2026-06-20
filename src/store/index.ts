@@ -1,72 +1,144 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { nanoid } from '../lib/nanoid';
+import { supabase, mapSeason, mapGame, mapPlayer, toSeasonRow, toGameRow, toPlayerRow } from '../lib/supabase';
 import type { Season, Game, Player } from '../types';
 
 interface AppState {
   seasons: Season[];
   games: Game[];
   players: Player[];
-  activeSeason: string | null;
+  loading: boolean;
 
-  // Seasons
-  addSeason: (data: Omit<Season, 'id' | 'createdAt'>) => Season;
-  updateSeason: (id: string, data: Partial<Season>) => void;
-  deleteSeason: (id: string) => void;
-  setActiveSeason: (id: string | null) => void;
+  loadUserData: (userId: string) => Promise<void>;
+  clearData: () => void;
 
-  // Games
-  addGame: (data: Omit<Game, 'id'>) => void;
-  addGames: (games: Omit<Game, 'id'>[]) => void;
-  updateGame: (id: string, data: Partial<Game>) => void;
-  deleteGame: (id: string) => void;
+  addSeason: (data: Omit<Season, 'id' | 'createdAt'>, userId: string) => Promise<Season | null>;
+  updateSeason: (id: string, data: Partial<Season>) => Promise<void>;
+  deleteSeason: (id: string) => Promise<void>;
 
-  // Players
-  addPlayer: (data: Omit<Player, 'id'>) => void;
-  updatePlayer: (id: string, data: Partial<Player>) => void;
-  deletePlayer: (id: string) => void;
+  addGame: (data: Omit<Game, 'id'>, userId: string) => Promise<void>;
+  addGames: (games: Omit<Game, 'id'>[], userId: string) => Promise<void>;
+  updateGame: (id: string, data: Partial<Game>) => Promise<void>;
+  deleteGame: (id: string) => Promise<void>;
+
+  addPlayer: (data: Omit<Player, 'id'>, userId: string) => Promise<void>;
+  updatePlayer: (id: string, data: Partial<Player>) => Promise<void>;
+  deletePlayer: (id: string) => Promise<void>;
 }
 
-export const useStore = create<AppState>()(
-  persist(
-    (set) => ({
-      seasons: [],
-      games: [],
-      players: [],
-      activeSeason: null,
+export const useStore = create<AppState>((set) => ({
+  seasons: [],
+  games: [],
+  players: [],
+  loading: false,
 
-      addSeason: (data) => {
-        const season: Season = { ...data, id: nanoid(), createdAt: new Date().toISOString() };
-        set((s) => ({ seasons: [...s.seasons, season] }));
-        return season;
-      },
-      updateSeason: (id, data) =>
-        set((s) => ({ seasons: s.seasons.map((x) => (x.id === id ? { ...x, ...data } : x)) })),
-      deleteSeason: (id) =>
-        set((s) => ({
-          seasons: s.seasons.filter((x) => x.id !== id),
-          games: s.games.filter((x) => x.seasonId !== id),
-          players: s.players.filter((x) => x.seasonId !== id),
-          activeSeason: s.activeSeason === id ? null : s.activeSeason,
-        })),
-      setActiveSeason: (id) => set({ activeSeason: id }),
+  loadUserData: async (userId) => {
+    set({ loading: true });
+    const [s, g, p] = await Promise.all([
+      supabase.from('seasons').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('games').select('*').eq('user_id', userId),
+      supabase.from('players').select('*').eq('user_id', userId),
+    ]);
+    set({
+      seasons: (s.data ?? []).map(mapSeason),
+      games: (g.data ?? []).map(mapGame),
+      players: (p.data ?? []).map(mapPlayer),
+      loading: false,
+    });
+  },
 
-      addGame: (data) =>
-        set((s) => ({ games: [...s.games, { ...data, id: nanoid() }] })),
-      addGames: (games) =>
-        set((s) => ({ games: [...s.games, ...games.map((g) => ({ ...g, id: nanoid() }))] })),
-      updateGame: (id, data) =>
-        set((s) => ({ games: s.games.map((x) => (x.id === id ? { ...x, ...data } : x)) })),
-      deleteGame: (id) =>
-        set((s) => ({ games: s.games.filter((x) => x.id !== id) })),
+  clearData: () => set({ seasons: [], games: [], players: [] }),
 
-      addPlayer: (data) =>
-        set((s) => ({ players: [...s.players, { ...data, id: nanoid() }] })),
-      updatePlayer: (id, data) =>
-        set((s) => ({ players: s.players.map((x) => (x.id === id ? { ...x, ...data } : x)) })),
-      deletePlayer: (id) =>
-        set((s) => ({ players: s.players.filter((x) => x.id !== id) })),
-    }),
-    { name: 'dugout-storage' }
-  )
-);
+  // ── Seasons ───────────────────────────────────────────────────────────────
+
+  addSeason: async (data, userId) => {
+    const { data: row, error } = await supabase
+      .from('seasons').insert(toSeasonRow(data, userId)).select().single();
+    if (error || !row) return null;
+    const season = mapSeason(row);
+    set((s) => ({ seasons: [season, ...s.seasons] }));
+    return season;
+  },
+
+  updateSeason: async (id, data) => {
+    const row: Record<string, unknown> = {};
+    if (data.name !== undefined) row.name = data.name;
+    if (data.year !== undefined) row.year = data.year;
+    if (data.teamName !== undefined) row.team_name = data.teamName;
+    if (data.ageGroup !== undefined) row.age_group = data.ageGroup;
+    await supabase.from('seasons').update(row).eq('id', id);
+    set((s) => ({ seasons: s.seasons.map((x) => (x.id === id ? { ...x, ...data } : x)) }));
+  },
+
+  deleteSeason: async (id) => {
+    await supabase.from('seasons').delete().eq('id', id);
+    set((s) => ({
+      seasons: s.seasons.filter((x) => x.id !== id),
+      games: s.games.filter((x) => x.seasonId !== id),
+      players: s.players.filter((x) => x.seasonId !== id),
+    }));
+  },
+
+  // ── Games ─────────────────────────────────────────────────────────────────
+
+  addGame: async (data, userId) => {
+    const { data: row, error } = await supabase
+      .from('games').insert(toGameRow(data, userId)).select().single();
+    if (error || !row) return;
+    set((s) => ({ games: [...s.games, mapGame(row)] }));
+  },
+
+  addGames: async (games, userId) => {
+    const { data: rows, error } = await supabase
+      .from('games').insert(games.map((g) => toGameRow(g, userId))).select();
+    if (error || !rows) return;
+    set((s) => ({ games: [...s.games, ...rows.map(mapGame)] }));
+  },
+
+  updateGame: async (id, data) => {
+    const row: Record<string, unknown> = {};
+    if (data.date !== undefined) row.date = data.date;
+    if (data.time !== undefined) row.time = data.time;
+    if (data.opponent !== undefined) row.opponent = data.opponent;
+    if (data.location !== undefined) row.location = data.location;
+    if (data.isHome !== undefined) row.is_home = data.isHome;
+    if ('result' in data) row.result = data.result ?? null;
+    if ('myScore' in data) row.my_score = data.myScore ?? null;
+    if ('opponentScore' in data) row.opponent_score = data.opponentScore ?? null;
+    if ('notes' in data) row.notes = data.notes ?? null;
+    await supabase.from('games').update(row).eq('id', id);
+    set((s) => ({ games: s.games.map((x) => (x.id === id ? { ...x, ...data } : x)) }));
+  },
+
+  deleteGame: async (id) => {
+    await supabase.from('games').delete().eq('id', id);
+    set((s) => ({ games: s.games.filter((x) => x.id !== id) }));
+  },
+
+  // ── Players ───────────────────────────────────────────────────────────────
+
+  addPlayer: async (data, userId) => {
+    const { data: row, error } = await supabase
+      .from('players').insert(toPlayerRow(data, userId)).select().single();
+    if (error || !row) return;
+    set((s) => ({ players: [...s.players, mapPlayer(row)] }));
+  },
+
+  updatePlayer: async (id, data) => {
+    const row: Record<string, unknown> = {};
+    if (data.firstName !== undefined) row.first_name = data.firstName;
+    if (data.lastName !== undefined) row.last_name = data.lastName;
+    if ('number' in data) row.number = data.number ?? null;
+    if (data.positions !== undefined) row.positions = data.positions;
+    if ('parentName' in data) row.parent_name = data.parentName ?? null;
+    if ('parentPhone' in data) row.parent_phone = data.parentPhone ?? null;
+    if ('parentEmail' in data) row.parent_email = data.parentEmail ?? null;
+    if ('notes' in data) row.notes = data.notes ?? null;
+    await supabase.from('players').update(row).eq('id', id);
+    set((s) => ({ players: s.players.map((x) => (x.id === id ? { ...x, ...data } : x)) }));
+  },
+
+  deletePlayer: async (id) => {
+    await supabase.from('players').delete().eq('id', id);
+    set((s) => ({ players: s.players.filter((x) => x.id !== id) }));
+  },
+}));

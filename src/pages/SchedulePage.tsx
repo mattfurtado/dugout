@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Plus, UploadSimple, Trash, CalendarDots, MapPin, PencilSimple, Link as LinkIcon, CircleNotch, WarningCircle } from '@phosphor-icons/react';
 import { format, parseISO } from 'date-fns';
 import { useStore } from '../store';
+import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -211,6 +212,7 @@ function WebCalModal({
 export function SchedulePage() {
   const { id: seasonId } = useParams<{ id: string }>();
   const { games, seasons, addGame, addGames, updateGame, deleteGame } = useStore();
+  const { user } = useAuthStore();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
   const [showWebCal, setShowWebCal] = useState(false);
@@ -223,12 +225,12 @@ export function SchedulePage() {
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !seasonId) return;
+    if (!file || !seasonId || !user) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const csv = ev.target?.result as string;
       const parsed = parseCSV(csv, seasonId);
-      if (parsed.length) addGames(parsed);
+      if (parsed.length) addGames(parsed, user.id);
       e.target.value = '';
     };
     reader.readAsText(file);
@@ -319,7 +321,7 @@ export function SchedulePage() {
         <Modal title="Add Game" onClose={() => setShowForm(false)}>
           <GameForm
             seasonId={seasonId}
-            onSubmit={(data) => { addGame(data); setShowForm(false); }}
+            onSubmit={(data) => { if (user) addGame(data, user.id); setShowForm(false); }}
             onCancel={() => setShowForm(false)}
           />
         </Modal>
@@ -339,7 +341,7 @@ export function SchedulePage() {
           <WebCalModal
             seasonId={seasonId}
             myTeam={season?.teamName ?? ''}
-            onImport={(games) => { addGames(games); }}
+            onImport={(games) => { if (user) addGames(games, user.id); }}
             onClose={() => setShowWebCal(false)}
           />
         </Modal>

@@ -11,7 +11,9 @@ const tabs = [
 export function SeasonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const season = useStore((s) => s.seasons.find((x) => x.id === id));
+  const loading = useStore((s) => s.loading);
 
+  if (loading) return null;
   if (!season) return <Navigate to="/seasons" replace />;
 
   const base = `/seasons/${id}`;

@@ -1,7 +1,10 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
-import { Baseball, List } from '@phosphor-icons/react';
+import { Link, Outlet } from 'react-router-dom';
+import { Baseball, SignOut } from '@phosphor-icons/react';
+import { useAuthStore } from '../../store/authStore';
 
 export function Layout() {
+  const { signOut } = useAuthStore();
+
   return (
     <div className="flex flex-col min-h-dvh bg-zinc-950">
       <header className="bg-zinc-900 border-b border-zinc-800 px-4 shadow-sm flex items-center justify-between">
@@ -9,12 +12,15 @@ export function Layout() {
           <Baseball size={24} weight="fill" className="text-green-400" />
           <span className="font-bold text-lg tracking-tight text-zinc-100">Dugout</span>
         </Link>
-        <NavLink
-          to="/seasons"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
-        >
-          <List size={16} /> Seasons
-        </NavLink>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={signOut}
+            className="p-1.5 rounded-lg text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400 transition-colors"
+            title="Sign out"
+          >
+            <SignOut size={16} />
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto">
