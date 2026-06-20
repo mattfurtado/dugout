@@ -47,7 +47,7 @@ export function Layout() {
               <div className="w-px h-4 bg-zinc-700 shrink-0" />
 
               {/* Season switcher */}
-              <div ref={switcherRef} className="relative min-w-0 flex-1 max-w-xs">
+              <div ref={switcherRef} className="relative min-w-0 flex-1">
                 <button
                   onClick={() => setShowSwitcher((v) => !v)}
                   className="flex items-center gap-1 hover:opacity-80 transition-opacity py-1 text-left w-full min-w-0"
@@ -95,8 +95,6 @@ export function Layout() {
               </div>
             </>
           )}
-
-          <div className="flex-1" />
 
           <button
             onClick={signOut}
