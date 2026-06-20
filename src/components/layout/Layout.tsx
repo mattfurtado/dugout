@@ -11,6 +11,30 @@ const SEASON_TABS = [
   { path: 'lineup', label: 'Lineup', end: false },
 ];
 
+function SeasonNav({ seasonId, variant }: { seasonId: string; variant: 'inline' | 'row' }) {
+  const base =
+    variant === 'inline'
+      ? 'px-3 h-full text-sm font-medium whitespace-nowrap shrink-0 transition-colors flex items-center border-b-2 -mb-px'
+      : 'px-3 py-2.5 text-sm font-medium whitespace-nowrap shrink-0 transition-colors border-b-2';
+
+  return (
+    <>
+      {SEASON_TABS.map(({ path, label, end }) => (
+        <NavLink
+          key={label}
+          to={path ? `/seasons/${seasonId}/${path}` : `/seasons/${seasonId}`}
+          end={end}
+          className={({ isActive }) =>
+            `${base} ${isActive ? 'text-zinc-100 border-green-500' : 'text-zinc-500 hover:text-zinc-300 border-transparent'}`
+          }
+        >
+          {label}
+        </NavLink>
+      ))}
+    </>
+  );
+}
+
 export function Layout() {
   const { signOut } = useAuthStore();
   const seasons = useStore((s) => s.seasons);
@@ -35,7 +59,7 @@ export function Layout() {
     <div className="flex flex-col min-h-dvh bg-zinc-950">
       <header className="sticky top-0 z-30 bg-zinc-900 border-b border-zinc-800 shadow-sm">
 
-        {/* Row 1: logo + season switcher + sign out */}
+        {/* Row 1 */}
         <div className="flex items-center gap-3 px-4 h-13 min-w-0">
           <Link to="/seasons" className="flex items-center gap-2 py-3 hover:opacity-80 transition-opacity shrink-0">
             <Baseball size={22} weight="fill" className="text-green-400" />
@@ -46,17 +70,17 @@ export function Layout() {
             <>
               <div className="w-px h-4 bg-zinc-700 shrink-0" />
 
-              {/* Season switcher */}
-              <div ref={switcherRef} className="relative min-w-0 flex-1">
+              {/* Season switcher — flex-1 on mobile, auto on desktop */}
+              <div ref={switcherRef} className="relative min-w-0 flex-1 sm:flex-none">
                 <button
                   onClick={() => setShowSwitcher((v) => !v)}
-                  className="flex items-center gap-1 hover:opacity-80 transition-opacity py-1 text-left w-full min-w-0"
+                  className="flex items-center gap-1 hover:opacity-80 transition-opacity py-1 text-left min-w-0"
                 >
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-zinc-200 leading-tight truncate">
+                    <div className="text-sm font-medium text-zinc-200 leading-tight truncate max-w-[10rem] sm:max-w-none">
                       {currentSeason.teamName || currentSeason.name}
                     </div>
-                    <div className="text-xs text-zinc-500 leading-tight truncate">
+                    <div className="text-xs text-zinc-500 leading-tight truncate max-w-[10rem] sm:max-w-none">
                       {[currentSeason.teamName ? currentSeason.name : null, currentSeason.ageGroup, currentSeason.year].filter(Boolean).join(' · ')}
                     </div>
                   </div>
@@ -93,8 +117,16 @@ export function Layout() {
                   </div>
                 )}
               </div>
+
+              {/* Desktop nav — inline in row 1 */}
+              <div className="hidden sm:flex items-center h-full">
+                <div className="w-px h-4 bg-zinc-700 shrink-0 mr-1" />
+                <SeasonNav seasonId={seasonId} variant="inline" />
+              </div>
             </>
           )}
+
+          <div className="flex-1" />
 
           <button
             onClick={signOut}
@@ -106,25 +138,10 @@ export function Layout() {
           </button>
         </div>
 
-        {/* Row 2: season nav tabs */}
+        {/* Row 2: season nav tabs — mobile only */}
         {seasonId && currentSeason && (
-          <nav className="flex overflow-x-auto border-t border-zinc-800 px-2 scrollbar-none">
-            {SEASON_TABS.map(({ path, label, end }) => (
-              <NavLink
-                key={label}
-                to={path ? `/seasons/${seasonId}/${path}` : `/seasons/${seasonId}`}
-                end={end}
-                className={({ isActive }) =>
-                  `px-3 py-2.5 text-sm font-medium whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                    isActive
-                      ? 'text-zinc-100 border-green-500'
-                      : 'text-zinc-500 hover:text-zinc-300 border-transparent'
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+          <nav className="sm:hidden flex overflow-x-auto border-t border-zinc-800 px-2 scrollbar-none">
+            <SeasonNav seasonId={seasonId} variant="row" />
           </nav>
         )}
       </header>

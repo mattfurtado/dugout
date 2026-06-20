@@ -463,16 +463,16 @@ export function LineupPage() {
             </span>
           )}
         </div>
-        <div className="flex bg-zinc-800 rounded-lg p-0.5 w-full">
+        <div className="inline-flex bg-zinc-800 rounded-lg p-0.5">
           <button
             onClick={() => setTab('my')}
-            className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             My Rankings
           </button>
           <button
             onClick={() => setTab('aggregate')}
-            className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Season Aggregate
           </button>
