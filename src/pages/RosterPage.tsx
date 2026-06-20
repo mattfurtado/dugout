@@ -165,10 +165,19 @@ export function RosterPage() {
   const isOwner = season?.ownerId === user?.id;
 
   const roster = players.filter((p) => p.seasonId === seasonId).sort((a, b) => a.lastName.localeCompare(b.lastName));
-  const staff = coaches.filter((c) => c.seasonId === seasonId).sort((a, b) => {
-    const roleOrder = ALL_ROLES.indexOf(a.role) - ALL_ROLES.indexOf(b.role);
-    return roleOrder !== 0 ? roleOrder : a.name.localeCompare(b.name);
-  });
+  const seenCoaches = new Set<string>();
+  const staff = coaches
+    .filter((c) => c.seasonId === seasonId)
+    .sort((a, b) => {
+      const roleOrder = ALL_ROLES.indexOf(a.role) - ALL_ROLES.indexOf(b.role);
+      return roleOrder !== 0 ? roleOrder : a.name.localeCompare(b.name);
+    })
+    .filter((c) => {
+      const key = (c.email?.toLowerCase() || c.name.toLowerCase());
+      if (seenCoaches.has(key)) return false;
+      seenCoaches.add(key);
+      return true;
+    });
 
   if (!seasonId) {
     return <EmptyState icon={<Users size={48} />} title="Season not found" description="Return to seasons and try again." />;
