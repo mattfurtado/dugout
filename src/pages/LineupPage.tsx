@@ -74,15 +74,15 @@ function SortablePlayerRow({
       <button
         {...attributes}
         {...listeners}
-        className="p-0.5 text-zinc-700 hover:text-zinc-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
+        className="p-0.5 text-zinc-500 hover:text-zinc-300 cursor-grab active:cursor-grabbing touch-none shrink-0"
         tabIndex={-1}
       >
         <DotsSixVertical size={14} />
       </button>
-      <span className="text-xs text-zinc-600 w-6 shrink-0">{RANK_LABEL(rank)}</span>
+      <span className="text-xs text-zinc-500 w-6 shrink-0">{RANK_LABEL(rank)}</span>
       <span className="flex-1 text-sm text-zinc-200 truncate">
         {player.firstName} {player.lastName}
-        {player.number != null && <span className="text-zinc-600 text-xs ml-1.5">#{player.number}</span>}
+        {player.number != null && <span className="text-zinc-500 text-xs ml-1.5">#{player.number}</span>}
       </span>
       <button
         onClick={onRemove}
