@@ -4,7 +4,18 @@ import { Baseball } from '@phosphor-icons/react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 
-type InviteDetails = { season_id: string; team_name: string; season_name: string; age_group: string; year: number };
+type InviteDetails = {
+  season_id: string;
+  team_name: string;
+  season_name: string;
+  age_group: string;
+  year: number;
+  has_head_coach: boolean;
+};
+
+type Role = 'Head Coach' | 'Assistant Coach';
+const ROLES: Role[] = ['Head Coach', 'Assistant Coach'];
+const STORAGE_KEY = 'invite_role';
 
 export function InvitePage() {
   const { token } = useParams<{ token: string }>();
@@ -13,31 +24,50 @@ export function InvitePage() {
 
   const [details, setDetails] = useState<InviteDetails | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [role, setRole] = useState<Role>('Assistant Coach');
   const [accepting, setAccepting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
-  // Load invite details (public RPC — no auth required)
+  // Load invite details
   useEffect(() => {
     if (!token) return;
     supabase.rpc('get_invite_details', { invite_id: token }).then(({ data }) => {
       if (!data || data.length === 0) { setNotFound(true); return; }
-      setDetails(data[0] as InviteDetails);
+      const d = data[0] as InviteDetails;
+      setDetails(d);
+      // Restore role saved before OAuth redirect, or default sensibly
+      const saved = sessionStorage.getItem(STORAGE_KEY) as Role | null;
+      if (saved === 'Head Coach' && !d.has_head_coach) {
+        setRole('Head Coach');
+      } else if (saved === 'Assistant Coach') {
+        setRole('Assistant Coach');
+      } else {
+        setRole(d.has_head_coach ? 'Assistant Coach' : 'Head Coach');
+      }
     });
   }, [token]);
 
-  // Auto-accept once the user is signed in and invite details are loaded
-  useEffect(() => {
-    if (!user || !details || done || accepting) return;
+  // Accept once signed in and role is chosen
+  const accept = (chosenRole: Role) => {
+    if (!token) return;
     setAccepting(true);
-    supabase.rpc('accept_coach_invite', { invite_id: token }).then(({ error: rpcError }) => {
+    supabase.rpc('accept_coach_invite', { invite_id: token, coach_role: chosenRole }).then(({ error: rpcError }) => {
       setAccepting(false);
+      sessionStorage.removeItem(STORAGE_KEY);
       if (rpcError) { setError(rpcError.message); return; }
       setDone(true);
     });
+  };
+
+  // Auto-accept when user signs in via OAuth redirect
+  useEffect(() => {
+    if (!user || !details || done || accepting) return;
+    accept(role);
   }, [user, details]);
 
   const handleSignIn = () => {
+    sessionStorage.setItem(STORAGE_KEY, role);
     supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.href },
@@ -73,9 +103,32 @@ export function InvitePage() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h1 className="text-base font-bold text-zinc-100">{teamLabel}</h1>
             {subLabel && <p className="text-xs text-zinc-500 mt-0.5">{subLabel}</p>}
-            <p className="text-sm text-zinc-400 mt-3 mb-5">
-              You've been invited to join as a coach. Sign in to accept.
-            </p>
+            <p className="text-sm text-zinc-400 mt-4 mb-3">You've been invited to join as a coach. Choose your role:</p>
+
+            <div className="flex gap-2 mb-5">
+              {ROLES.map((r) => {
+                const disabled = r === 'Head Coach' && details.has_head_coach;
+                const active = role === r;
+                return (
+                  <button
+                    key={r}
+                    disabled={disabled}
+                    onClick={() => !disabled && setRole(r)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                      disabled
+                        ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
+                        : active
+                        ? 'border-green-500 bg-green-500/10 text-green-400'
+                        : 'border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
+                    }`}
+                  >
+                    {r}
+                    {disabled && <span className="block text-xs font-normal text-zinc-600 mt-0.5">Already filled</span>}
+                  </button>
+                );
+              })}
+            </div>
+
             <button
               onClick={handleSignIn}
               className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
@@ -106,7 +159,7 @@ export function InvitePage() {
               <Baseball size={24} weight="fill" className="text-green-400" />
             </div>
             <h2 className="text-base font-bold text-zinc-100 mb-1">You're in!</h2>
-            <p className="text-sm text-zinc-400 mb-5">You've joined {teamLabel}. Head to the lineup ranker to submit your rankings.</p>
+            <p className="text-sm text-zinc-400 mb-5">You've joined {teamLabel} as {role}. Head to the lineup ranker to submit your rankings.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}
               className="w-full bg-green-500 hover:bg-green-400 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
