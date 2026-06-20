@@ -271,7 +271,7 @@ export function RosterPage() {
             <h2 className="text-base font-bold text-zinc-100">Players</h2>
             <p className="text-xs text-zinc-500">{roster.length} player{roster.length !== 1 ? 's' : ''}</p>
           </div>
-          {isOwner && (
+          {canManageRoles && (
             <Button size="sm" onClick={() => setShowPlayerForm(true)}>
               <Plus size={15} /> Add Player
             </Button>
@@ -283,7 +283,7 @@ export function RosterPage() {
             icon={<Users size={48} />}
             title="No players yet"
             description="Add players to build your roster for this season."
-            action={<Button onClick={() => setShowPlayerForm(true)}><Plus size={15} /> Add Player</Button>}
+            action={canManageRoles ? <Button onClick={() => setShowPlayerForm(true)}><Plus size={15} /> Add Player</Button> : undefined}
           />
         ) : (
           <div className="space-y-2">
@@ -316,7 +316,7 @@ export function RosterPage() {
                     </div>
                   )}
                 </div>
-                {isOwner && (
+                {canManageRoles && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => setEditingPlayer(p)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300">
                       <PencilSimple size={15} />
