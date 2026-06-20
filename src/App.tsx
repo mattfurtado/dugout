@@ -9,12 +9,14 @@ import { SeasonDetailPage } from './pages/SeasonDetailPage';
 import { SeasonOverviewPage } from './pages/SeasonOverviewPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { RosterPage } from './pages/RosterPage';
+import { LineupPage } from './pages/LineupPage';
 import AuthPage from './pages/AuthPage';
 
 function DataLoader({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const loadUserData = useStore((s) => s.loadUserData);
   const clearData = useStore((s) => s.clearData);
+  const initialized = useStore((s) => s.initialized);
 
   useEffect(() => {
     if (user) {
@@ -23,6 +25,14 @@ function DataLoader({ children }: { children: React.ReactNode }) {
       clearData();
     }
   }, [user?.id]);
+
+  if (user && !initialized) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
@@ -48,6 +58,7 @@ export default function App() {
               <Route index element={<SeasonOverviewPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route path="roster" element={<RosterPage />} />
+              <Route path="lineup" element={<LineupPage />} />
             </Route>
           </Route>
         </Routes>

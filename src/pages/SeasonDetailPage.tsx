@@ -1,19 +1,18 @@
 import { NavLink, Outlet, useParams, Navigate } from 'react-router-dom';
-import { ChartBar, CalendarDots, Users } from '@phosphor-icons/react';
+import { ChartBar, CalendarDots, Users, ListNumbers } from '@phosphor-icons/react';
 import { useStore } from '../store';
 
 const tabs = [
   { to: '', label: 'Overview', icon: ChartBar, end: true },
   { to: 'schedule', label: 'Schedule', icon: CalendarDots, end: false },
   { to: 'roster', label: 'Roster', icon: Users, end: false },
+  { to: 'lineup', label: 'Lineup', icon: ListNumbers, end: false },
 ];
 
 export function SeasonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const season = useStore((s) => s.seasons.find((x) => x.id === id));
-  const loading = useStore((s) => s.loading);
 
-  if (loading) return null;
   if (!season) return <Navigate to="/seasons" replace />;
 
   const base = `/seasons/${id}`;

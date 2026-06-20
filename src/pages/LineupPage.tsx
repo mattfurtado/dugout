@@ -1,0 +1,390 @@
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users } from '@phosphor-icons/react';
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor,
+  KeyboardSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, useSortable,
+  verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useStore } from '../store';
+import { useAuthStore } from '../store/authStore';
+import { Modal } from '../components/ui/Modal';
+import { EmptyState } from '../components/ui/EmptyState';
+import type { LineupPosition, LineupRankings, Player } from '../types';
+
+const OUTFIELD: LineupPosition[] = ['LF', 'CF', 'RF'];
+
+const POSITION_GROUPS: { label: string; positions: LineupPosition[] }[] = [
+  { label: 'Pitching', positions: ['P'] },
+  { label: 'Infield', positions: ['C', '1B', '2B', '3B', 'SS'] },
+  { label: 'Outfield', positions: ['LF', 'CF', 'RF'] },
+  { label: 'Other', positions: ['DH'] },
+];
+
+const RANK_LABEL = (i: number) =>
+  ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'][i] ?? `${i + 1}th`;
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
+interface Warning { playerId: string; name: string; message: string }
+
+function getWarnings(rankings: LineupRankings, players: Player[]): Warning[] {
+  const byPlayer: Record<string, LineupPosition[]> = {};
+  for (const [pos, ids] of Object.entries(rankings) as [LineupPosition, string[]][]) {
+    for (const id of ids ?? []) byPlayer[id] = [...(byPlayer[id] ?? []), pos];
+  }
+  return players.flatMap((p) => {
+    const assigned = byPlayer[p.id] ?? [];
+    if (!assigned.length) return [];
+    const name = `${p.firstName} ${p.lastName}`;
+    const warnings: Warning[] = [];
+    if (assigned.length < 2)
+      warnings.push({ playerId: p.id, name, message: `only assigned to ${assigned.length} position — needs at least 2` });
+    if (assigned.every((pos) => OUTFIELD.includes(pos)))
+      warnings.push({ playerId: p.id, name, message: 'only assigned to outfield positions' });
+    return warnings;
+  });
+}
+
+function getAssignmentCounts(rankings: LineupRankings): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const ids of Object.values(rankings))
+    for (const id of ids ?? []) counts[id] = (counts[id] ?? 0) + 1;
+  return counts;
+}
+
+// ── Sortable player row ───────────────────────────────────────────────────────
+
+function SortablePlayerRow({
+  player, rank, onRemove,
+}: {
+  player: Player; rank: number; onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: player.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
+      className="flex items-center gap-2 group"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-0.5 text-zinc-700 hover:text-zinc-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
+        tabIndex={-1}
+      >
+        <DotsSixVertical size={14} />
+      </button>
+      <span className="text-xs text-zinc-600 w-6 shrink-0">{RANK_LABEL(rank)}</span>
+      <span className="flex-1 text-sm text-zinc-200 truncate">
+        {player.firstName} {player.lastName}
+        {player.number != null && <span className="text-zinc-600 text-xs ml-1.5">#{player.number}</span>}
+      </span>
+      <button
+        onClick={onRemove}
+        className="p-0.5 rounded text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+      >
+        <X size={13} />
+      </button>
+    </div>
+  );
+}
+
+// ── Sortable position list ────────────────────────────────────────────────────
+
+function PositionList({
+  position, ranked, onReorder, onRemove, onAdd,
+}: {
+  position: LineupPosition;
+  ranked: Player[];
+  onReorder: (position: LineupPosition, ids: string[]) => void;
+  onRemove: (position: LineupPosition, playerId: string) => void;
+  onAdd: (position: LineupPosition) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = ranked.map((p) => p.id);
+    const oldIndex = ids.indexOf(active.id as string);
+    const newIndex = ids.indexOf(over.id as string);
+    onReorder(position, arrayMove(ids, oldIndex, newIndex));
+  };
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+      <div className="flex items-start gap-4">
+        <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{position}</span>
+        <div className="flex-1 space-y-2 min-w-0">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={ranked.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              {ranked.map((player, i) => (
+                <SortablePlayerRow
+                  key={player.id}
+                  player={player}
+                  rank={i}
+                  onRemove={() => onRemove(position, player.id)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          <button
+            onClick={() => onAdd(position)}
+            className="flex items-center gap-1 text-xs text-zinc-600 hover:text-green-400 transition-colors"
+          >
+            <Plus size={12} />
+            {ranked.length === 0 ? 'Add player' : 'Add another'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Player Picker ─────────────────────────────────────────────────────────────
+
+function PlayerPicker({
+  position, available, counts, onPick, onClose,
+}: {
+  position: LineupPosition;
+  available: Player[];
+  counts: Record<string, number>;
+  onPick: (playerIds: string[]) => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const sorted = [...available].sort((a, b) => {
+    const aPlays = a.positions.includes(position as never) ? 0 : 1;
+    const bPlays = b.positions.includes(position as never) ? 0 : 1;
+    if (aPlays !== bPlays) return aPlays - bPlays;
+    return a.lastName.localeCompare(b.lastName);
+  });
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  return (
+    <Modal title={`Add to ${position}`} onClose={onClose}>
+      {sorted.length === 0 ? (
+        <p className="text-zinc-500 text-sm text-center py-4">All players already assigned to this position.</p>
+      ) : (
+        <>
+          <div className="space-y-0.5 max-h-72 overflow-y-auto -mx-1 mb-3">
+            {sorted.map((player) => {
+              const count = counts[player.id] ?? 0;
+              const playsPos = player.positions.includes(position as never);
+              const isSelected = selected.has(player.id);
+              return (
+                <button
+                  key={player.id}
+                  onClick={() => toggle(player.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                    isSelected ? 'bg-green-500/10 border border-green-500/20' : 'hover:bg-zinc-800 border border-transparent'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                    isSelected ? 'bg-green-500 border-green-500' : 'border-zinc-600'
+                  }`}>
+                    {isSelected && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-green-500/15 border border-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0">
+                    {player.number != null ? player.number : (player.firstName[0] + player.lastName[0]).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-zinc-200">{player.firstName} {player.lastName}</div>
+                    <div className="text-xs text-zinc-600">
+                      {count === 0 ? 'No positions assigned yet' : `${count} position${count !== 1 ? 's' : ''} assigned`}
+                    </div>
+                  </div>
+                  {playsPos && (
+                    <span className="text-xs bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full shrink-0">
+                      plays {position}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => selected.size > 0 && onPick([...selected])}
+            disabled={selected.size === 0}
+            className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors"
+          >
+            {selected.size === 0 ? 'Select players' : `Add ${selected.size} player${selected.size !== 1 ? 's' : ''}`}
+          </button>
+        </>
+      )}
+    </Modal>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export function LineupPage() {
+  const { id: seasonId } = useParams<{ id: string }>();
+  const { players, lineupRankings, loadLineupRankings, saveLineupRankings } = useStore();
+  const { user } = useAuthStore();
+
+  const [local, setLocal] = useState<LineupRankings>({});
+  const [picking, setPicking] = useState<LineupPosition | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle');
+
+  const initialized = useRef(false);
+  const lastSaved = useRef('{}');
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const roster = players.filter((p) => p.seasonId === seasonId);
+
+  useEffect(() => {
+    if (!seasonId) return;
+    loadLineupRankings(seasonId).then(() => {
+      const loaded = useStore.getState().lineupRankings[seasonId] ?? {};
+      setLocal(loaded);
+      lastSaved.current = JSON.stringify(loaded);
+      initialized.current = true;
+    });
+  }, [seasonId]);
+
+  useEffect(() => {
+    if (!initialized.current || !user || !seasonId) return;
+    const serialized = JSON.stringify(local);
+    if (serialized === lastSaved.current) return;
+    setSaveStatus('pending');
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSaveStatus('saving');
+      await saveLineupRankings(seasonId, local, user.id);
+      lastSaved.current = serialized;
+      setSaveStatus('saved');
+    }, 800);
+    return () => clearTimeout(saveTimer.current);
+  }, [local]);
+
+  const addPlayers = (position: LineupPosition, playerIds: string[]) => {
+    setLocal((prev) => {
+      const current = prev[position] ?? [];
+      const toAdd = playerIds.filter((id) => !current.includes(id));
+      return { ...prev, [position]: [...current, ...toAdd] };
+    });
+    setPicking(null);
+  };
+
+  const removePlayer = (position: LineupPosition, playerId: string) => {
+    setLocal((prev) => ({
+      ...prev,
+      [position]: (prev[position] ?? []).filter((id) => id !== playerId),
+    }));
+  };
+
+  const reorderPosition = (position: LineupPosition, ids: string[]) => {
+    setLocal((prev) => ({ ...prev, [position]: ids }));
+  };
+
+  const availableFor = (position: LineupPosition) => {
+    const assigned = new Set(local[position] ?? []);
+    return roster.filter((p) => !assigned.has(p.id));
+  };
+
+  const warnings = getWarnings(local, roster);
+  const counts = getAssignmentCounts(local);
+  const hasAnyRankings = Object.values(local).some((ids) => ids && ids.length > 0);
+
+  if (roster.length === 0) {
+    return (
+      <div className="p-4 max-w-xl mx-auto pt-6">
+        <EmptyState
+          icon={<Users size={48} />}
+          title="No players on roster"
+          description="Add players to your roster before building a lineup."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 max-w-xl mx-auto">
+      <div className="flex items-center justify-between mb-5 pt-2">
+        <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
+        <span className="text-xs text-zinc-600">
+          {saveStatus === 'saving' && 'Saving…'}
+          {saveStatus === 'saved' && '✓ Saved'}
+        </span>
+      </div>
+
+      <div className="space-y-6">
+        {POSITION_GROUPS.map((group) => (
+          <div key={group.label}>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
+            <div className="space-y-2">
+              {group.positions.map((position) => {
+                const ranked = (local[position] ?? [])
+                  .map((id) => roster.find((p) => p.id === id))
+                  .filter(Boolean) as Player[];
+                return (
+                  <PositionList
+                    key={position}
+                    position={position}
+                    ranked={ranked}
+                    onReorder={reorderPosition}
+                    onRemove={removePlayer}
+                    onAdd={setPicking}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {hasAnyRankings && (
+          <div>
+            {warnings.length > 0 ? (
+              <div className="space-y-1.5">
+                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">Warnings</h2>
+                {warnings.map((w, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
+                    <WarningCircle size={13} className="shrink-0 mt-0.5" />
+                    <span><span className="font-semibold">{w.name}</span> — {w.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                <CheckCircle size={13} />
+                All assignments look good
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {picking && (
+        <PlayerPicker
+          position={picking}
+          available={availableFor(picking)}
+          counts={counts}
+          onPick={(ids) => addPlayers(picking, ids)}
+          onClose={() => setPicking(null)}
+        />
+      )}
+    </div>
+  );
+}

@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { supabase, mapSeason, mapGame, mapPlayer, toSeasonRow, toGameRow, toPlayerRow } from '../lib/supabase';
-import type { Season, Game, Player } from '../types';
+import type { Season, Game, Player, LineupRankings } from '../types';
 
 interface AppState {
   seasons: Season[];
   games: Game[];
   players: Player[];
   loading: boolean;
+  initialized: boolean;
 
   loadUserData: (userId: string) => Promise<void>;
   clearData: () => void;
@@ -23,6 +24,10 @@ interface AppState {
   addPlayer: (data: Omit<Player, 'id'>, userId: string) => Promise<void>;
   updatePlayer: (id: string, data: Partial<Player>) => Promise<void>;
   deletePlayer: (id: string) => Promise<void>;
+
+  lineupRankings: Record<string, LineupRankings>;
+  loadLineupRankings: (seasonId: string) => Promise<void>;
+  saveLineupRankings: (seasonId: string, rankings: LineupRankings, userId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -30,6 +35,8 @@ export const useStore = create<AppState>((set) => ({
   games: [],
   players: [],
   loading: false,
+  initialized: false,
+  lineupRankings: {},
 
   loadUserData: async (userId) => {
     set({ loading: true });
@@ -43,10 +50,11 @@ export const useStore = create<AppState>((set) => ({
       games: (g.data ?? []).map(mapGame),
       players: (p.data ?? []).map(mapPlayer),
       loading: false,
+      initialized: true,
     });
   },
 
-  clearData: () => set({ seasons: [], games: [], players: [] }),
+  clearData: () => set({ seasons: [], games: [], players: [], initialized: false }),
 
   // ── Seasons ───────────────────────────────────────────────────────────────
 
@@ -140,5 +148,26 @@ export const useStore = create<AppState>((set) => ({
   deletePlayer: async (id) => {
     await supabase.from('players').delete().eq('id', id);
     set((s) => ({ players: s.players.filter((x) => x.id !== id) }));
+  },
+
+  // ── Lineup Rankings ───────────────────────────────────────────────────────
+
+  loadLineupRankings: async (seasonId) => {
+    const { data } = await supabase
+      .from('lineup_rankings')
+      .select('rankings')
+      .eq('season_id', seasonId)
+      .single();
+    set((s) => ({
+      lineupRankings: { ...s.lineupRankings, [seasonId]: (data?.rankings as LineupRankings) ?? {} },
+    }));
+  },
+
+  saveLineupRankings: async (seasonId, rankings, userId) => {
+    await supabase.from('lineup_rankings').upsert(
+      { season_id: seasonId, user_id: userId, rankings, updated_at: new Date().toISOString() },
+      { onConflict: 'season_id' }
+    );
+    set((s) => ({ lineupRankings: { ...s.lineupRankings, [seasonId]: rankings } }));
   },
 }));

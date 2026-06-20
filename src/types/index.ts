@@ -36,3 +36,6 @@ export interface Player {
 
 export type Position =
   | 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'Bench';
+
+export type LineupPosition = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH';
+export type LineupRankings = Partial<Record<LineupPosition, string[]>>;
