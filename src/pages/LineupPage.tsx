@@ -14,7 +14,7 @@ import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/EmptyState';
-import type { LineupPosition, LineupRankings, Player, Season } from '../types';
+import type { LineupPosition, LineupRankings, Player } from '../types';
 
 const OUTFIELD: LineupPosition[] = ['LF', 'CF', 'RF'];
 
@@ -278,9 +278,9 @@ function computeAggregate(allRankings: LineupRankings[]): Record<string, Aggrega
 }
 
 function AggregateView({
-  seasonId, roster, season,
+  seasonId, roster,
 }: {
-  seasonId: string; roster: Player[]; season: Season;
+  seasonId: string; roster: Player[];
 }) {
   const { coachRankings, loadCoachRankings } = useStore();
   const [loading, setLoading] = useState(false);
@@ -371,7 +371,7 @@ function AggregateView({
 
 export function LineupPage() {
   const { id: seasonId } = useParams<{ id: string }>();
-  const { players, seasons, loadLineupRankings, saveLineupRankings } = useStore();
+  const { players, loadLineupRankings, saveLineupRankings } = useStore();
   const { user } = useAuthStore();
 
   const [tab, setTab] = useState<'my' | 'aggregate'>('my');
@@ -384,8 +384,6 @@ export function LineupPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const roster = players.filter((p) => p.seasonId === seasonId);
-  const season = seasons.find((s) => s.id === seasonId);
-  const isOwner = season?.ownerId === user?.id;
 
   useEffect(() => {
     if (!seasonId || !user) return;
@@ -481,8 +479,8 @@ export function LineupPage() {
         )}
       </div>
 
-      {tab === 'aggregate' && season ? (
-        <AggregateView seasonId={seasonId!} roster={roster} season={season} />
+      {tab === 'aggregate' ? (
+        <AggregateView seasonId={seasonId!} roster={roster} />
       ) : (
         <>
           <div className="space-y-6">

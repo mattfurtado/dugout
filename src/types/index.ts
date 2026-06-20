@@ -1,6 +1,6 @@
 export interface Season {
   id: string;
-  ownerId: string;
+  ownerId?: string;
   name: string;
   year: number;
   teamName: string;

@@ -153,7 +153,7 @@ export function RosterPage() {
   const [copied, setCopied] = useState(false);
 
   const handleCopyInvite = async () => {
-    if (!user) return;
+    if (!user || !seasonId) return;
     const id = await createInvite(seasonId, user.id);
     if (!id) return;
     await navigator.clipboard.writeText(`${window.location.origin}/invite/${id}`);
