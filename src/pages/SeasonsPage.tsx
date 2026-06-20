@@ -21,7 +21,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 }
 
 export function SeasonsPage() {
-  const { seasons, addSeason, updateSeason, deleteSeason } = useStore();
+  const { seasons, addSeason, updateSeason, deleteSeason, addCoach } = useStore();
   const { user } = useAuthStore();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Season | null>(null);
@@ -31,7 +31,15 @@ export function SeasonsPage() {
     if (!user) return;
     const s = await addSeason(data, user.id);
     setShowForm(false);
-    if (s) navigate(`/seasons/${s.id}`);
+    if (s) {
+      const name =
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        user.email ??
+        'Head Coach';
+      await addCoach({ seasonId: s.id, name, role: 'Head Coach' }, user.id);
+      navigate(`/seasons/${s.id}`);
+    }
   };
 
   const handleEdit = async (data: Omit<Season, 'id' | 'createdAt'>) => {
@@ -79,22 +87,26 @@ export function SeasonsPage() {
                   <div className="text-xs text-zinc-500 mt-0.5">{s.ageGroup} · {s.year}</div>
                 </div>
                 <ArrowRight size={16} className="text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0" />
-                <Tooltip label="Edit">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditing(s); }}
-                    className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors shrink-0"
-                  >
-                    <PencilSimple size={16} />
-                  </button>
-                </Tooltip>
-                <Tooltip label="Delete">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteSeason(s.id); }}
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400 transition-colors shrink-0"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </Tooltip>
+                {s.ownerId === user?.id && (
+                  <>
+                    <Tooltip label="Edit">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditing(s); }}
+                        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors shrink-0"
+                      >
+                        <PencilSimple size={16} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip label="Delete">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteSeason(s.id); }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400 transition-colors shrink-0"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </Tooltip>
+                  </>
+                )}
               </div>
             ))}
         </div>

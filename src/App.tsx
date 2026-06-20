@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import RequireAuth from './components/auth/RequireAuth';
 import { useAuthStore } from './store/authStore';
@@ -11,12 +11,14 @@ import { SchedulePage } from './pages/SchedulePage';
 import { RosterPage } from './pages/RosterPage';
 import { LineupPage } from './pages/LineupPage';
 import AuthPage from './pages/AuthPage';
+import { InvitePage } from './pages/InvitePage';
 
 function DataLoader({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const loadUserData = useStore((s) => s.loadUserData);
   const clearData = useStore((s) => s.clearData);
   const initialized = useStore((s) => s.initialized);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (user) {
@@ -26,7 +28,8 @@ function DataLoader({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
-  if (user && !initialized) {
+  // Don't block the invite page — it handles its own loading state
+  if (user && !initialized && !pathname.startsWith('/invite')) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
@@ -47,6 +50,7 @@ export default function App() {
       <DataLoader>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/invite/:token" element={<InvitePage />} />
           <Route path="/" element={
             <RequireAuth>
               <Layout />

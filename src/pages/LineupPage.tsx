@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users } from '@phosphor-icons/react';
+import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users, ChartBar } from '@phosphor-icons/react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
   KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -14,7 +14,7 @@ import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/EmptyState';
-import type { LineupPosition, LineupRankings, Player } from '../types';
+import type { LineupPosition, LineupRankings, Player, Season } from '../types';
 
 const OUTFIELD: LineupPosition[] = ['LF', 'CF', 'RF'];
 
@@ -254,13 +254,127 @@ function PlayerPicker({
   );
 }
 
+// ── Aggregate helpers ─────────────────────────────────────────────────────────
+
+type AggregateEntry = { playerId: string; score: number; coachCount: number };
+
+function computeAggregate(allRankings: LineupRankings[]): Record<string, AggregateEntry[]> {
+  const positions = [...new Set(allRankings.flatMap((r) => Object.keys(r)))] as LineupPosition[];
+  const result: Record<string, AggregateEntry[]> = {};
+  for (const pos of positions) {
+    const allPlayers = [...new Set(allRankings.flatMap((r) => r[pos] ?? []))];
+    const scores: Record<string, number> = {};
+    const counts: Record<string, number> = {};
+    for (const id of allPlayers) { scores[id] = 0; counts[id] = 0; }
+    for (const r of allRankings) {
+      const ranked = r[pos] ?? [];
+      ranked.forEach((id, i) => { scores[id] += ranked.length - i; counts[id]++; });
+    }
+    result[pos] = allPlayers
+      .map((id) => ({ playerId: id, score: scores[id], coachCount: counts[id] }))
+      .sort((a, b) => b.score - a.score);
+  }
+  return result;
+}
+
+function AggregateView({
+  seasonId, roster, season,
+}: {
+  seasonId: string; roster: Player[]; season: Season;
+}) {
+  const { coachRankings, loadCoachRankings } = useStore();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    loadCoachRankings(seasonId).then(() => setLoading(false));
+  }, [seasonId]);
+
+  const byCoach = coachRankings[seasonId] ?? {};
+  const allRankings = Object.values(byCoach);
+  const numCoaches = allRankings.length;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center pt-12">
+        <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (numCoaches === 0) {
+    return (
+      <div className="pt-8 text-center">
+        <ChartBar size={40} className="text-zinc-700 mx-auto mb-3" />
+        <p className="text-sm text-zinc-500">No coach rankings submitted yet.</p>
+        <p className="text-xs text-zinc-600 mt-1">Share the invite link so coaches can rank players.</p>
+      </div>
+    );
+  }
+
+  const aggregate = computeAggregate(allRankings);
+  const playerById = Object.fromEntries(roster.map((p) => [p.id, p]));
+
+  return (
+    <div className="space-y-6">
+      <p className="text-xs text-zinc-500">
+        Based on rankings from <span className="text-zinc-300 font-medium">{numCoaches} coach{numCoaches !== 1 ? 'es' : ''}</span> · Borda count
+      </p>
+      {POSITION_GROUPS.map((group) => {
+        const hasAny = group.positions.some((pos) => aggregate[pos]?.length);
+        if (!hasAny) return null;
+        return (
+          <div key={group.label}>
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
+            <div className="space-y-2">
+              {group.positions.map((pos) => {
+                const entries = aggregate[pos];
+                if (!entries?.length) return null;
+                return (
+                  <div key={pos} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+                    <div className="flex items-start gap-4">
+                      <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{pos}</span>
+                      <div className="flex-1 space-y-2">
+                        {entries.map((entry, i) => {
+                          const player = playerById[entry.playerId];
+                          if (!player) return null;
+                          const pct = Math.round((entry.coachCount / numCoaches) * 100);
+                          return (
+                            <div key={entry.playerId} className="flex items-center gap-2">
+                              <span className="text-xs text-zinc-600 w-6 shrink-0">{RANK_LABEL(i)}</span>
+                              <span className="flex-1 text-sm text-zinc-200 truncate">
+                                {player.firstName} {player.lastName}
+                                {player.number != null && <span className="text-zinc-600 text-xs ml-1.5">#{player.number}</span>}
+                              </span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
+                                pct === 100 ? 'bg-green-500/15 text-green-400' : 'bg-zinc-800 text-zinc-500'
+                              }`}>
+                                {entry.coachCount}/{numCoaches}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function LineupPage() {
   const { id: seasonId } = useParams<{ id: string }>();
-  const { players, loadLineupRankings, saveLineupRankings } = useStore();
+  const { players, seasons, loadLineupRankings, saveLineupRankings } = useStore();
   const { user } = useAuthStore();
 
+  const [tab, setTab] = useState<'my' | 'aggregate'>('my');
   const [local, setLocal] = useState<LineupRankings>({});
   const [picking, setPicking] = useState<LineupPosition | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle');
@@ -270,16 +384,18 @@ export function LineupPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const roster = players.filter((p) => p.seasonId === seasonId);
+  const season = seasons.find((s) => s.id === seasonId);
+  const isOwner = season?.ownerId === user?.id;
 
   useEffect(() => {
-    if (!seasonId) return;
-    loadLineupRankings(seasonId).then(() => {
+    if (!seasonId || !user) return;
+    loadLineupRankings(seasonId, user.id).then(() => {
       const loaded = useStore.getState().lineupRankings[seasonId] ?? {};
       setLocal(loaded);
       lastSaved.current = JSON.stringify(loaded);
       initialized.current = true;
     });
-  }, [seasonId]);
+  }, [seasonId, user?.id]);
 
   useEffect(() => {
     if (!initialized.current || !user || !seasonId) return;
@@ -340,67 +456,91 @@ export function LineupPage() {
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-5 pt-2">
-        <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
-        <span className="text-xs text-zinc-600">
-          {saveStatus === 'saving' && 'Saving…'}
-          {saveStatus === 'saved' && '✓ Saved'}
-        </span>
-      </div>
-
-      <div className="space-y-6">
-        {POSITION_GROUPS.map((group) => (
-          <div key={group.label}>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
-            <div className="space-y-2">
-              {group.positions.map((position) => {
-                const ranked = (local[position] ?? [])
-                  .map((id) => roster.find((p) => p.id === id))
-                  .filter(Boolean) as Player[];
-                return (
-                  <PositionList
-                    key={position}
-                    position={position}
-                    ranked={ranked}
-                    onReorder={reorderPosition}
-                    onRemove={removePlayer}
-                    onAdd={setPicking}
-                  />
-                );
-              })}
-            </div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
+          <div className="flex bg-zinc-800 rounded-lg p-0.5 ml-2">
+            <button
+              onClick={() => setTab('my')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              My Rankings
+            </button>
+            <button
+              onClick={() => setTab('aggregate')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              Season Aggregate
+            </button>
           </div>
-        ))}
-
-        {hasAnyRankings && (
-          <div>
-            {warnings.length > 0 ? (
-              <div className="space-y-1.5">
-                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">Warnings</h2>
-                {warnings.map((w, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
-                    <WarningCircle size={13} className="shrink-0 mt-0.5" />
-                    <span><span className="font-semibold">{w.name}</span> — {w.message}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                <CheckCircle size={13} />
-                All assignments look good
-              </div>
-            )}
-          </div>
+        </div>
+        {tab === 'my' && (
+          <span className="text-xs text-zinc-600">
+            {saveStatus === 'saving' && 'Saving…'}
+            {saveStatus === 'saved' && '✓ Saved'}
+          </span>
         )}
       </div>
 
-      {picking && (
-        <PlayerPicker
-          position={picking}
-          available={availableFor(picking)}
-          counts={counts}
-          onPick={(ids) => addPlayers(picking, ids)}
-          onClose={() => setPicking(null)}
-        />
+      {tab === 'aggregate' && season ? (
+        <AggregateView seasonId={seasonId!} roster={roster} season={season} />
+      ) : (
+        <>
+          <div className="space-y-6">
+            {POSITION_GROUPS.map((group) => (
+              <div key={group.label}>
+                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
+                <div className="space-y-2">
+                  {group.positions.map((position) => {
+                    const ranked = (local[position] ?? [])
+                      .map((id) => roster.find((p) => p.id === id))
+                      .filter(Boolean) as Player[];
+                    return (
+                      <PositionList
+                        key={position}
+                        position={position}
+                        ranked={ranked}
+                        onReorder={reorderPosition}
+                        onRemove={removePlayer}
+                        onAdd={setPicking}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {hasAnyRankings && (
+              <div>
+                {warnings.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">Warnings</h2>
+                    {warnings.map((w, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
+                        <WarningCircle size={13} className="shrink-0 mt-0.5" />
+                        <span><span className="font-semibold">{w.name}</span> — {w.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                    <CheckCircle size={13} />
+                    All assignments look good
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {picking && (
+            <PlayerPicker
+              position={picking}
+              available={availableFor(picking)}
+              counts={counts}
+              onPick={(ids) => addPlayers(picking, ids)}
+              onClose={() => setPicking(null)}
+            />
+          )}
+        </>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Season, Game, Player } from '../types';
+import type { Season, Game, Player, Coach, CoachRole } from '../types';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -11,6 +11,7 @@ export const supabase = createClient(url, key);
 type SeasonRow = {
   id: string; user_id: string; name: string; year: number;
   team_name: string; age_group: string; created_at: string;
+  [key: string]: unknown;
 };
 type GameRow = {
   id: string; season_id: string; user_id: string; date: string; time: string;
@@ -24,11 +25,15 @@ type PlayerRow = {
   parent_name: string | null; parent_phone: string | null;
   parent_email: string | null; notes: string | null; created_at: string;
 };
+type CoachRow = {
+  id: string; season_id: string; user_id: string; name: string;
+  role: string; phone: string | null; email: string | null; created_at: string;
+};
 
 // ── Mappers ─────────────────────────────────────────────────────────────────
 
 export const mapSeason = (r: SeasonRow): Season => ({
-  id: r.id, name: r.name, year: r.year,
+  id: r.id, ownerId: r.user_id, name: r.name, year: r.year,
   teamName: r.team_name, ageGroup: r.age_group, createdAt: r.created_at,
 });
 
@@ -66,4 +71,14 @@ export const toPlayerRow = (d: Omit<Player, 'id'>, userId: string) => ({
   number: d.number ?? null, positions: d.positions,
   parent_name: d.parentName ?? null, parent_phone: d.parentPhone ?? null,
   parent_email: d.parentEmail ?? null, notes: d.notes ?? null, user_id: userId,
+});
+
+export const mapCoach = (r: CoachRow): Coach => ({
+  id: r.id, seasonId: r.season_id, name: r.name,
+  role: r.role as CoachRole, phone: r.phone ?? undefined, email: r.email ?? undefined,
+});
+
+export const toCoachRow = (d: Omit<Coach, 'id'>, userId: string) => ({
+  season_id: d.seasonId, name: d.name, role: d.role,
+  phone: d.phone ?? null, email: d.email ?? null, user_id: userId,
 });
