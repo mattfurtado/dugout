@@ -179,6 +179,12 @@ export function RosterPage() {
       return true;
     });
 
+  // Invited head coaches can reassign roles but can't add/delete coaches or manage players
+  const isHeadCoach = !isOwner && staff.some(
+    (c) => c.role === 'Head Coach' && c.email && c.email.toLowerCase() === user?.email?.toLowerCase()
+  );
+  const canManageRoles = isOwner || isHeadCoach;
+
   if (!seasonId) {
     return <EmptyState icon={<Users size={48} />} title="Season not found" description="Return to seasons and try again." />;
   }
@@ -240,14 +246,16 @@ export function RosterPage() {
                     )}
                   </div>
                 </div>
-                {isOwner && (
+                {canManageRoles && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => setEditingCoach(c)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300">
                       <PencilSimple size={15} />
                     </button>
-                    <button onClick={() => deleteCoach(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400">
-                      <Trash size={15} />
-                    </button>
+                    {isOwner && (
+                      <button onClick={() => deleteCoach(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400">
+                        <Trash size={15} />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
