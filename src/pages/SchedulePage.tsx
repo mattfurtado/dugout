@@ -247,7 +247,7 @@ export function SchedulePage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-lg font-bold text-zinc-100">Schedule</h1>
         <div className="flex gap-2">

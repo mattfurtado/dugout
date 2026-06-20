@@ -22,7 +22,6 @@ const POSITION_GROUPS: { label: string; positions: LineupPosition[] }[] = [
   { label: 'Pitching', positions: ['P'] },
   { label: 'Infield', positions: ['C', '1B', '2B', '3B', 'SS'] },
   { label: 'Outfield', positions: ['LF', 'CF', 'RF'] },
-  { label: 'Other', positions: ['DH'] },
 ];
 
 const RANK_LABEL = (i: number) =>
@@ -163,8 +162,15 @@ function PlayerPicker({
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
 
-  const sorted = [...available].sort((a, b) => {
+  const filtered = query.trim()
+    ? available.filter((p) =>
+        `${p.firstName} ${p.lastName}`.toLowerCase().includes(query.toLowerCase())
+      )
+    : available;
+
+  const sorted = [...filtered].sort((a, b) => {
     const aPlays = a.positions.includes(position as never) ? 0 : 1;
     const bPlays = b.positions.includes(position as never) ? 0 : 1;
     if (aPlays !== bPlays) return aPlays - bPlays;
@@ -180,11 +186,22 @@ function PlayerPicker({
 
   return (
     <Modal title={`Add to ${position}`} onClose={onClose}>
-      {sorted.length === 0 ? (
+      {available.length === 0 ? (
         <p className="text-zinc-500 text-sm text-center py-4">All players already assigned to this position.</p>
       ) : (
         <>
-          <div className="space-y-0.5 max-h-72 overflow-y-auto -mx-1 mb-3">
+          <input
+            type="text"
+            placeholder="Search players…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoFocus
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 mb-3"
+          />
+          <div className="space-y-0.5 max-h-64 overflow-y-auto -mx-1 mb-3">
+            {sorted.length === 0 && (
+              <p className="text-zinc-500 text-sm text-center py-4">No players match "{query}"</p>
+            )}
             {sorted.map((player) => {
               const count = counts[player.id] ?? 0;
               const playsPos = player.positions.includes(position as never);
@@ -310,7 +327,7 @@ export function LineupPage() {
 
   if (roster.length === 0) {
     return (
-      <div className="p-4 max-w-xl mx-auto pt-6">
+      <div className="p-4 max-w-3xl mx-auto pt-6">
         <EmptyState
           icon={<Users size={48} />}
           title="No players on roster"
@@ -321,7 +338,7 @@ export function LineupPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-5 pt-2">
         <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
         <span className="text-xs text-zinc-600">

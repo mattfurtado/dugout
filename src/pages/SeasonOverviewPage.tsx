@@ -27,7 +27,7 @@ export function SeasonOverviewPage() {
   const played = seasonGames.filter((g) => g.result).length;
 
   return (
-    <div className="p-4 max-w-xl mx-auto space-y-4">
+    <div className="p-4 max-w-3xl mx-auto space-y-4">
       {/* Record */}
       {played > 0 && (
         <div className="grid grid-cols-3 gap-3 pt-2">
