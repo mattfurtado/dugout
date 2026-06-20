@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# Dugout
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A mobile-first web app for little league coaches to manage seasons, rosters, and schedules.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Seasons** — create and manage multiple seasons; each season is the root of all data
+- **Schedule** — add games manually, import from a CSV file, or subscribe to a WebCal / .ics feed
+- **Roster** — track players with jersey numbers, positions, and parent contact info
+- **Overview** — per-season dashboard showing W-L record and upcoming games
+- **Offline-first** — all data stored locally in the browser via localStorage; no backend required
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org)
+- [Vite](https://vite.dev) with HMR
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Zustand](https://zustand-demo.pmnd.rs) for state management + persistence
+- [React Router v7](https://reactrouter.com)
+- [Phosphor Icons](https://phosphoricons.com)
+- [date-fns](https://date-fns.org)
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm install
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:5173](http://localhost:5173). The app is also accessible on your local network for mobile testing.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Project Structure
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+├── components/
+│   ├── layout/       # App shell, header, nav
+│   ├── seasons/      # Season form
+│   └── ui/           # Button, Modal, EmptyState
+├── lib/              # CSV + ICS parsers, nanoid
+├── pages/
+│   ├── SeasonsPage         # Season list
+│   ├── SeasonDetailPage    # Tab shell (Overview / Schedule / Roster)
+│   ├── SeasonOverviewPage  # Dashboard for a season
+│   ├── SchedulePage        # Game management
+│   └── RosterPage          # Player management
+├── store/            # Zustand store with localStorage persistence
+└── types/            # Shared TypeScript types
+```
+
+## Schedule Import
+
+Games can be imported from a CSV file with flexible column headers:
+
+| Column | Aliases |
+|--------|---------|
+| `date` | `gamedate`, `scheduleddate` |
+| `time` | `gametime`, `starttime` |
+| `opponent` | `opposingteam`, `vs`, `team` |
+| `location` | `field`, `venue`, `site` |
+| `home` | `ishome`, `homeaway` |
+
+WebCal (`.ics`) feeds can be imported by URL or file upload. `webcal://` URLs are automatically converted to `https://` for fetching.
