@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import type { Player, Position, Coach, CoachRole } from '../types';
 
 const ALL_POSITIONS: Position[] = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH', 'Bench'];
-const ALL_ROLES: CoachRole[] = ['Head Coach', 'Assistant Coach', 'Pitching Coach', 'Team Parent', 'Other'];
+const ALL_ROLES: CoachRole[] = ['Head Coach', 'Assistant Coach'];
 
 const inputCls = 'w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50';
 
