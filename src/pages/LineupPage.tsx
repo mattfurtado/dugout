@@ -453,30 +453,30 @@ export function LineupPage() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-5 pt-2">
-        <div className="flex items-center gap-2">
+      <div className="mb-5 pt-2">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
-          <div className="flex bg-zinc-800 rounded-lg p-0.5 ml-2">
-            <button
-              onClick={() => setTab('my')}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              My Rankings
-            </button>
-            <button
-              onClick={() => setTab('aggregate')}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Season Aggregate
-            </button>
-          </div>
+          {tab === 'my' && (
+            <span className="text-xs text-zinc-600">
+              {saveStatus === 'saving' && 'Saving…'}
+              {saveStatus === 'saved' && '✓ Saved'}
+            </span>
+          )}
         </div>
-        {tab === 'my' && (
-          <span className="text-xs text-zinc-600">
-            {saveStatus === 'saving' && 'Saving…'}
-            {saveStatus === 'saved' && '✓ Saved'}
-          </span>
-        )}
+        <div className="flex bg-zinc-800 rounded-lg p-0.5 w-full">
+          <button
+            onClick={() => setTab('my')}
+            className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            My Rankings
+          </button>
+          <button
+            onClick={() => setTab('aggregate')}
+            className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            Season Aggregate
+          </button>
+        </div>
       </div>
 
       {tab === 'aggregate' ? (
