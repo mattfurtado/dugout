@@ -137,13 +137,15 @@ function PositionList({
               ))}
             </SortableContext>
           </DndContext>
-          <button
-            onClick={() => onAdd(position)}
-            className="flex items-center gap-1 text-xs text-zinc-600 hover:text-green-400 transition-colors"
-          >
-            <Plus size={12} />
-            {ranked.length === 0 ? 'Add player' : 'Add another'}
-          </button>
+          {ranked.length < 5 && (
+            <button
+              onClick={() => onAdd(position)}
+              className="flex items-center gap-1 text-xs text-zinc-600 hover:text-green-400 transition-colors"
+            >
+              <Plus size={12} />
+              {ranked.length === 0 ? 'Add player' : 'Add another'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -413,7 +415,8 @@ export function LineupPage() {
   const addPlayers = (position: LineupPosition, playerIds: string[]) => {
     setLocal((prev) => {
       const current = prev[position] ?? [];
-      const toAdd = playerIds.filter((id) => !current.includes(id));
+      const slots = 5 - current.length;
+      const toAdd = playerIds.filter((id) => !current.includes(id)).slice(0, slots);
       return { ...prev, [position]: [...current, ...toAdd] };
     });
     setPicking(null);
