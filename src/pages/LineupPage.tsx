@@ -258,7 +258,7 @@ function PlayerPicker({
 
 export function LineupPage() {
   const { id: seasonId } = useParams<{ id: string }>();
-  const { players, lineupRankings, loadLineupRankings, saveLineupRankings } = useStore();
+  const { players, loadLineupRankings, saveLineupRankings } = useStore();
   const { user } = useAuthStore();
 
   const [local, setLocal] = useState<LineupRankings>({});
@@ -267,7 +267,7 @@ export function LineupPage() {
 
   const initialized = useRef(false);
   const lastSaved = useRef('{}');
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const roster = players.filter((p) => p.seasonId === seasonId);
 
