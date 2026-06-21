@@ -500,7 +500,7 @@ export function LineupPage() {
             onClick={() => setTab('aggregate')}
             className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
-            Coach Aggregate
+            Coach Rankings
           </button>
         </div>
       </div>
