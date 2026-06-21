@@ -68,24 +68,20 @@ function SortablePlayerRow({
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className="flex items-center gap-2 group"
+      className="flex items-center gap-2 group cursor-grab active:cursor-grabbing touch-none"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-0.5 text-zinc-500 hover:text-zinc-300 cursor-grab active:cursor-grabbing touch-none shrink-0"
-        tabIndex={-1}
-      >
-        <DotsSixVertical size={14} />
-      </button>
+      <DotsSixVertical size={14} className="text-zinc-500 shrink-0" />
       <span className="text-xs text-zinc-500 w-6 shrink-0">{RANK_LABEL(rank)}</span>
       <span className="flex-1 text-sm text-zinc-200 truncate">
         {player.firstName} {player.lastName}
         {player.number != null && <span className="text-zinc-500 text-xs ml-1.5">#{player.number}</span>}
       </span>
       <button
-        onClick={onRemove}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        onPointerDown={(e) => e.stopPropagation()}
         className="p-0.5 rounded text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
       >
         <X size={13} />
