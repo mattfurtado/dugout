@@ -9,6 +9,7 @@ import { SeasonDetailPage } from './pages/SeasonDetailPage';
 import { SeasonOverviewPage } from './pages/SeasonOverviewPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { RosterPage } from './pages/RosterPage';
+import { LineupLayout } from './pages/LineupLayout';
 import { LineupPage } from './pages/LineupPage';
 import AuthPage from './pages/AuthPage';
 import { InvitePage } from './pages/InvitePage';
@@ -62,7 +63,10 @@ export default function App() {
               <Route index element={<SeasonOverviewPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route path="roster" element={<RosterPage />} />
-              <Route path="lineup" element={<LineupPage />} />
+              <Route path="lineup" element={<LineupLayout />}>
+                <Route index element={<Navigate to="ranker" replace />} />
+                <Route path="ranker" element={<LineupPage />} />
+              </Route>
             </Route>
           </Route>
         </Routes>
