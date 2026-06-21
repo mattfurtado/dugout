@@ -326,12 +326,12 @@ function AggregateView({
     );
   }
 
-  if (numCoaches === 0) {
+  if (numCoaches < 2) {
     return (
       <div className="pt-8 text-center">
         <ChartBar size={40} className="text-zinc-700 mx-auto mb-3" />
-        <p className="text-sm text-zinc-500">No coach rankings submitted yet.</p>
-        <p className="text-xs text-zinc-600 mt-1">Share the invite link so coaches can rank players.</p>
+        <p className="text-sm text-zinc-500">Not enough rankings yet.</p>
+        <p className="text-xs text-zinc-600 mt-1">At least 2 coaches need to submit rankings to see the aggregate.</p>
       </div>
     );
   }
@@ -499,7 +499,7 @@ export function LineupPage() {
             onClick={() => setTab('aggregate')}
             className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
-            Season Aggregate
+            Coach Aggregate
           </button>
         </div>
       </div>
