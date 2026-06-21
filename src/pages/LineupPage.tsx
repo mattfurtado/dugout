@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users, ChartBar } from '@phosphor-icons/react';
+import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users, ChartBar, ArrowUp, ArrowDown } from '@phosphor-icons/react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
   KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -59,11 +59,17 @@ function getAssignmentCounts(rankings: LineupRankings): Record<string, number> {
 // ── Sortable player row ───────────────────────────────────────────────────────
 
 function SortablePlayerRow({
-  player, rank, onRemove,
+  player, rank, isFirst, isLast, onRemove, onMoveUp, onMoveDown,
 }: {
-  player: Player; rank: number; onRemove: () => void;
+  player: Player; rank: number; isFirst: boolean; isLast: boolean;
+  onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: player.id });
+
+  const stopProp = (fn: () => void) => (e: React.PointerEvent) => {
+    e.stopPropagation();
+    fn();
+  };
 
   return (
     <div
@@ -79,13 +85,29 @@ function SortablePlayerRow({
         {player.firstName} {player.lastName}
         {player.number != null && <span className="text-zinc-500 text-xs ml-1.5">#{player.number}</span>}
       </span>
-      <button
-        onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="p-0.5 rounded text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-      >
-        <X size={13} />
-      </button>
+      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-all shrink-0">
+        <button
+          title="Move up"
+          onPointerDown={stopProp(onMoveUp)}
+          className={`p-0.5 rounded hover:text-zinc-200 transition-colors ${isFirst ? 'invisible' : 'text-zinc-500'}`}
+        >
+          <ArrowUp size={13} />
+        </button>
+        <button
+          title="Move down"
+          onPointerDown={stopProp(onMoveDown)}
+          className={`p-0.5 rounded hover:text-zinc-200 transition-colors ${isLast ? 'invisible' : 'text-zinc-500'}`}
+        >
+          <ArrowDown size={13} />
+        </button>
+        <button
+          title="Remove"
+          onPointerDown={stopProp(onRemove)}
+          className="p-0.5 rounded text-zinc-500 hover:text-red-400 transition-colors"
+        >
+          <X size={13} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -117,8 +139,8 @@ function PositionList({
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
-      <div className="flex items-start gap-4">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-2 sm:px-4 py-3">
+      <div className="flex items-start gap-2 sm:gap-4">
         <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{position}</span>
         <div className="flex-1 space-y-2 min-w-0">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -128,7 +150,11 @@ function PositionList({
                   key={player.id}
                   player={player}
                   rank={i}
+                  isFirst={i === 0}
+                  isLast={i === ranked.length - 1}
                   onRemove={() => onRemove(position, player.id)}
+                  onMoveUp={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i - 1))}
+                  onMoveDown={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i + 1))}
                 />
               ))}
             </SortableContext>
@@ -462,16 +488,16 @@ export function LineupPage() {
             </span>
           )}
         </div>
-        <div className="inline-flex bg-zinc-800 rounded-lg p-0.5">
+        <div className="flex sm:inline-flex bg-zinc-800 rounded-lg p-0.5">
           <button
             onClick={() => setTab('my')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             My Rankings
           </button>
           <button
             onClick={() => setTab('aggregate')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             Season Aggregate
           </button>
