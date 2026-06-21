@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, UploadSimple, Trash, CalendarDots, MapPin, PencilSimple, Link as LinkIcon, CircleNotch, WarningCircle } from '@phosphor-icons/react';
+import { Plus, UploadSimple, Trash, CalendarDots, MapPin, PencilSimple, Link as LinkIcon, CircleNotch, WarningCircle, ArrowLeft } from '@phosphor-icons/react';
 import { format, parseISO } from 'date-fns';
 import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -100,29 +100,16 @@ function GameForm({
   );
 }
 
-function formatDate(date: string) {
-  try { return format(parseISO(date), 'EEE, MMM d'); } catch { return date; }
-}
-
-function formatTime(time: string) {
-  if (!time) return '';
-  try {
-    const [h, m] = time.split(':').map(Number);
-    const suffix = h >= 12 ? 'pm' : 'am';
-    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${suffix}`;
-  } catch { return time; }
-}
-
-function WebCalModal({
+function WebCalImport({
   seasonId,
   myTeam,
   onImport,
-  onClose,
+  onBack,
 }: {
   seasonId: string;
   myTeam: string;
   onImport: (games: Omit<Game, 'id'>[]) => void;
-  onClose: () => void;
+  onBack: () => void;
 }) {
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -137,7 +124,6 @@ function WebCalModal({
       const games = await fetchAndParseICS(url.trim(), seasonId, myTeam);
       if (!games.length) throw new Error('No events found in the feed.');
       onImport(games);
-      onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       const isCors = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('cors');
@@ -157,7 +143,7 @@ function WebCalModal({
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       const games = parseICS(text, seasonId, myTeam);
-      if (games.length) { onImport(games); onClose(); }
+      if (games.length) { onImport(games); }
       else setError('No events found in the .ics file.');
       e.target.value = '';
     };
@@ -166,6 +152,10 @@ function WebCalModal({
 
   return (
     <div className="space-y-4">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+        <ArrowLeft size={14} /> Back
+      </button>
+
       <div>
         <label className="block text-xs font-medium text-zinc-400 mb-1">WebCal or HTTPS URL</label>
         <div className="flex gap-2">
@@ -180,7 +170,7 @@ function WebCalModal({
             {status === 'loading' ? <CircleNotch size={15} className="animate-spin" /> : 'Import'}
           </Button>
         </div>
-        <p className="text-xs text-zinc-600 mt-1">Paste the webcal link from your league's schedule page.</p>
+        <p className="text-xs text-zinc-500 mt-1">Paste the webcal link from your league's schedule page.</p>
       </div>
 
       {error && (
@@ -192,7 +182,7 @@ function WebCalModal({
 
       <div className="relative flex items-center gap-2">
         <div className="flex-1 border-t border-zinc-800" />
-        <span className="text-xs text-zinc-600 px-1">or</span>
+        <span className="text-xs text-zinc-500 px-1">or</span>
         <div className="flex-1 border-t border-zinc-800" />
       </div>
 
@@ -201,40 +191,107 @@ function WebCalModal({
         <Button variant="secondary" className="w-full" onClick={() => icsFileRef.current?.click()}>
           <UploadSimple size={15} /> Import .ics file
         </Button>
-        <p className="text-xs text-zinc-600 mt-1 text-center">Download the .ics from your league site, then import it here.</p>
+        <p className="text-xs text-zinc-500 mt-1 text-center">Download the .ics from your league site, then import it here.</p>
       </div>
-
-      <Button variant="ghost" className="w-full" onClick={onClose}>Cancel</Button>
     </div>
   );
+}
+
+function AddGameModal({
+  seasonId,
+  myTeam,
+  onAddGame,
+  onAddGames,
+  onClose,
+}: {
+  seasonId: string;
+  myTeam: string;
+  onAddGame: (data: Omit<Game, 'id'>) => void;
+  onAddGames: (games: Omit<Game, 'id'>[]) => void;
+  onClose: () => void;
+}) {
+  const [view, setView] = useState<'main' | 'webcal'>('main');
+  const csvRef = useRef<HTMLInputElement>(null);
+
+  const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const csv = ev.target?.result as string;
+      const parsed = parseCSV(csv, seasonId);
+      if (parsed.length) { onAddGames(parsed); onClose(); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  if (view === 'webcal') {
+    return (
+      <Modal title="Import WebCal / .ics" onClose={onClose}>
+        <WebCalImport
+          seasonId={seasonId}
+          myTeam={myTeam}
+          onImport={(games) => { onAddGames(games); onClose(); }}
+          onBack={() => setView('main')}
+        />
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title="Add Game" onClose={onClose}>
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" onClick={() => setView('webcal')}>
+            <LinkIcon size={15} /> WebCal / .ics
+          </Button>
+          <Button variant="secondary" className="flex-1" onClick={() => csvRef.current?.click()}>
+            <UploadSimple size={15} /> CSV
+          </Button>
+        </div>
+        <input ref={csvRef} type="file" accept=".csv" className="hidden" onChange={handleCSV} />
+
+        <div className="relative flex items-center gap-2">
+          <div className="flex-1 border-t border-zinc-800" />
+          <span className="text-xs text-zinc-500 px-1">or add manually</span>
+          <div className="flex-1 border-t border-zinc-800" />
+        </div>
+
+        <GameForm
+          seasonId={seasonId}
+          onSubmit={(data) => { onAddGame(data); onClose(); }}
+          onCancel={onClose}
+        />
+      </div>
+    </Modal>
+  );
+}
+
+function formatDate(date: string) {
+  try { return format(parseISO(date), 'EEE, MMM d'); } catch { return date; }
+}
+
+function formatTime(time: string) {
+  if (!time) return '';
+  try {
+    const [h, m] = time.split(':').map(Number);
+    const suffix = h >= 12 ? 'pm' : 'am';
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${suffix}`;
+  } catch { return time; }
 }
 
 export function SchedulePage() {
   const { id: seasonId } = useParams<{ id: string }>();
   const { games, seasons, addGame, addGames, updateGame, deleteGame } = useStore();
   const { user } = useAuthStore();
-  const [showForm, setShowForm] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
-  const [showWebCal, setShowWebCal] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const season = seasons.find((s) => s.id === seasonId);
   const seasonGames = games
     .filter((g) => g.seasonId === seasonId)
     .sort((a, b) => a.date.localeCompare(b.date));
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !seasonId || !user) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const csv = ev.target?.result as string;
-      const parsed = parseCSV(csv, seasonId);
-      if (parsed.length) addGames(parsed, user.id);
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  };
 
   if (!seasonId) {
     return (
@@ -250,33 +307,17 @@ export function SchedulePage() {
     <div className="p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-lg font-bold text-zinc-100">Schedule</h1>
-        <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setShowWebCal(true)}>
-            <LinkIcon size={15} /> WebCal
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
-            <UploadSimple size={15} /> CSV
-          </Button>
-          <Button size="sm" onClick={() => setShowForm(true)}>
-            <Plus size={15} /> Add
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => setShowAdd(true)}>
+          <Plus size={15} /> Add Game
+        </Button>
       </div>
-
-      <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
 
       {seasonGames.length === 0 ? (
         <EmptyState
           icon={<CalendarDots size={48} />}
           title="No games yet"
           description="Import a WebCal feed, upload a CSV or .ics file, or add games manually."
-          action={
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button variant="secondary" size="sm" onClick={() => setShowWebCal(true)}><LinkIcon size={15} /> WebCal / .ics</Button>
-              <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}><UploadSimple size={15} /> CSV</Button>
-              <Button size="sm" onClick={() => setShowForm(true)}><Plus size={15} /> Add Game</Button>
-            </div>
-          }
+          action={<Button size="sm" onClick={() => setShowAdd(true)}><Plus size={15} /> Add Game</Button>}
         />
       ) : (
         <div className="space-y-2">
@@ -317,14 +358,14 @@ export function SchedulePage() {
         </div>
       )}
 
-      {showForm && (
-        <Modal title="Add Game" onClose={() => setShowForm(false)}>
-          <GameForm
-            seasonId={seasonId}
-            onSubmit={(data) => { if (user) addGame(data, user.id); setShowForm(false); }}
-            onCancel={() => setShowForm(false)}
-          />
-        </Modal>
+      {showAdd && (
+        <AddGameModal
+          seasonId={seasonId}
+          myTeam={season?.teamName ?? ''}
+          onAddGame={(data) => { if (user) addGame(data, user.id); }}
+          onAddGames={(gs) => { if (user) addGames(gs, user.id); }}
+          onClose={() => setShowAdd(false)}
+        />
       )}
       {editing && (
         <Modal title="Edit Game" onClose={() => setEditing(null)}>
@@ -333,16 +374,6 @@ export function SchedulePage() {
             seasonId={seasonId}
             onSubmit={(data) => { updateGame(editing.id, data); setEditing(null); }}
             onCancel={() => setEditing(null)}
-          />
-        </Modal>
-      )}
-      {showWebCal && (
-        <Modal title="Import WebCal / .ics" onClose={() => setShowWebCal(false)}>
-          <WebCalModal
-            seasonId={seasonId}
-            myTeam={season?.teamName ?? ''}
-            onImport={(games) => { if (user) addGames(games, user.id); }}
-            onClose={() => setShowWebCal(false)}
           />
         </Modal>
       )}
