@@ -17,6 +17,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import type { LineupPosition, LineupRankings, Player } from '../types';
 
 const OUTFIELD: LineupPosition[] = ['LF', 'CF', 'RF'];
+const INFIELD: LineupPosition[] = ['C', '1B', '2B', '3B', 'SS'];
 
 const POSITION_GROUPS: { label: string; positions: LineupPosition[] }[] = [
   { label: 'Pitching', positions: ['P'] },
@@ -41,10 +42,10 @@ function getWarnings(rankings: LineupRankings, players: Player[]): Warning[] {
     if (!assigned.length) return [];
     const name = `${p.firstName} ${p.lastName}`;
     const warnings: Warning[] = [];
-    if (assigned.length < 2)
-      warnings.push({ playerId: p.id, name, message: `only assigned to ${assigned.length} position — needs at least 2` });
-    if (assigned.every((pos) => OUTFIELD.includes(pos)))
-      warnings.push({ playerId: p.id, name, message: 'only assigned to outfield positions' });
+    if (!assigned.some((pos) => OUTFIELD.includes(pos)))
+      warnings.push({ playerId: p.id, name, message: 'needs at least one outfield ranking (LF, CF, or RF)' });
+    if (!assigned.some((pos) => INFIELD.includes(pos)))
+      warnings.push({ playerId: p.id, name, message: 'needs at least one infield ranking (C, 1B, 2B, 3B, or SS)' });
     return warnings;
   });
 }
