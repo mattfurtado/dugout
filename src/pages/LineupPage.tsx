@@ -81,7 +81,7 @@ function SortablePlayerRow({
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
       className="flex items-center gap-2 group cursor-grab active:cursor-grabbing touch-none"
     >
-      <DotsSixVertical size={14} className="text-soft shrink-0" />
+      <DotsSixVertical size={18} className="text-soft shrink-0" />
       <span className="text-xs text-soft w-6 shrink-0">{RANK_LABEL(rank)}</span>
       <span className="flex-1 text-sm text-strong truncate">
         {player.firstName} {player.lastName}
@@ -91,23 +91,23 @@ function SortablePlayerRow({
         <button
           title="Move up"
           onPointerDown={stopProp(onMoveUp)}
-          className={`p-0.5 rounded hover:text-mid transition-colors ${isFirst ? 'invisible' : 'text-soft'}`}
+          className={`p-1 rounded cursor-pointer hover:text-mid transition-colors ${isFirst ? 'invisible' : 'text-soft'}`}
         >
-          <ArrowUp size={13} />
+          <ArrowUp size={16} />
         </button>
         <button
           title="Move down"
           onPointerDown={stopProp(onMoveDown)}
-          className={`p-0.5 rounded hover:text-mid transition-colors ${isLast ? 'invisible' : 'text-soft'}`}
+          className={`p-1 rounded cursor-pointer hover:text-mid transition-colors ${isLast ? 'invisible' : 'text-soft'}`}
         >
-          <ArrowDown size={13} />
+          <ArrowDown size={16} />
         </button>
         <button
           title="Remove"
           onPointerDown={stopProp(onRemove)}
-          className="p-0.5 rounded text-soft hover:text-red-400 transition-colors"
+          className="p-1 rounded cursor-pointer text-soft hover:text-red-400 transition-colors"
         >
-          <X size={13} />
+          <X size={16} />
         </button>
       </div>
     </div>
