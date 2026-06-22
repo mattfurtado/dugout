@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { Switch } from '@headlessui/react';
 import { ArrowDown, ArrowUp, ChartBar, CheckCircle, DotsSixVertical, Plus, Question, Users, WarningCircle, X } from '@phosphor-icons/react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
@@ -27,6 +28,11 @@ const POSITION_GROUPS: { label: string; positions: LineupPosition[] }[] = [
 ];
 
 const MAX_RANKED = 8;
+
+const stableStringify = (r: LineupRankings) =>
+  JSON.stringify(Object.fromEntries(
+    Object.entries(r).sort().map(([k, v]) => [k, [...(v ?? [])]])
+  ));
 
 const RANK_LABEL = (i: number) =>
   ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'][i] ?? `${i + 1}th`;
@@ -63,9 +69,9 @@ function getAssignmentCounts(rankings: LineupRankings): Record<string, number> {
 // ── Sortable player row ───────────────────────────────────────────────────────
 
 function SortablePlayerRow({
-  player, rank, isFirst, isLast, onRemove, onMoveUp, onMoveDown,
+  editing, player, rank, isFirst, isLast, onRemove, onMoveUp, onMoveDown,
 }: {
-  player: Player; rank: number; isFirst: boolean; isLast: boolean;
+  editing: boolean; player: Player; rank: number; isFirst: boolean; isLast: boolean;
   onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: player.id });
@@ -79,17 +85,17 @@ function SortablePlayerRow({
     <div
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
+      {...(editing ? listeners : {})}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className="flex items-center gap-2 group cursor-grab active:cursor-grabbing touch-none"
+      className={`flex items-center gap-2 group touch-none ${editing ? 'cursor-grab active:cursor-grabbing' : ''}`}
     >
-      <DotsSixVertical size={18} className="text-soft shrink-0" />
+      {editing && <DotsSixVertical size={18} className="text-soft shrink-0" />}
       <span className="text-xs text-soft w-6 shrink-0">{RANK_LABEL(rank)}</span>
       <span className="flex-1 text-sm text-strong truncate">
         {player.firstName} {player.lastName}
         {player.number != null && <span className="text-soft text-xs ml-1.5">#{player.number}</span>}
       </span>
-      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-all shrink-0">
+      <div className={`flex items-center gap-0.5 shrink-0 ${editing ? 'sm:opacity-0 sm:group-hover:opacity-100 transition-all' : 'invisible'}`}>
         <button
           title="Move up"
           onPointerDown={stopProp(onMoveUp)}
@@ -119,8 +125,9 @@ function SortablePlayerRow({
 // ── Sortable position list ────────────────────────────────────────────────────
 
 function PositionList({
-  position, ranked, onReorder, onRemove, onAdd,
+  editing, position, ranked, onReorder, onRemove, onAdd,
 }: {
+  editing: boolean;
   position: LineupPosition;
   ranked: Player[];
   onReorder: (position: LineupPosition, ids: string[]) => void;
@@ -153,6 +160,7 @@ function PositionList({
               {ranked.map((player, i) => (
                 <SortablePlayerRow
                   key={player.id}
+                  editing={editing}
                   player={player}
                   rank={i}
                   isFirst={i === 0}
@@ -164,7 +172,7 @@ function PositionList({
               ))}
             </SortableContext>
           </DndContext>
-          {ranked.length < 8 && (
+          {editing && ranked.length < 8 && (
             <button
               onClick={() => onAdd(position)}
               className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-red-600/50 hover:text-red-500 rounded-lg px-2.5 py-1 transition-colors"
@@ -414,7 +422,9 @@ export function LineupPage() {
   const { players, loadLineupRankings, saveLineupRankings } = useStore();
   const { user } = useAuthStore();
 
+  const isMobile = window.matchMedia('(pointer: coarse)').matches;
   const [showHelp, setShowHelp] = useState(false);
+  const [editing, setEditing] = useState(!isMobile);
   const [tab, setTab] = useState<'my' | 'aggregate'>('my');
   const [local, setLocal] = useState<LineupRankings>({});
   const [picking, setPicking] = useState<LineupPosition | null>(null);
@@ -433,14 +443,14 @@ export function LineupPage() {
       const loaded = useStore.getState().lineupRankings[seasonId] ?? {};
       setLocal(loaded);
       initialRankings.current = loaded;
-      lastSaved.current = JSON.stringify(loaded);
+      lastSaved.current = stableStringify(loaded);
       initialized.current = true;
     });
   }, [seasonId, user?.id]);
 
   useEffect(() => {
     if (!initialized.current || !user || !seasonId) return;
-    const serialized = JSON.stringify(local);
+    const serialized = stableStringify(local);
     if (serialized === lastSaved.current) return;
     setSaveStatus('pending');
     clearTimeout(saveTimer.current);
@@ -511,7 +521,7 @@ export function LineupPage() {
           </div>
           {tab === 'my' && (
             <div className="flex items-center gap-3">
-              {JSON.stringify(local) !== JSON.stringify(initialRankings.current) && (
+              {!editing && stableStringify(local) !== stableStringify(initialRankings.current) && (
                 <button
                   className="text-xs text-ghost hover:text-soft transition-colors"
                   onClick={() => setLocal(initialRankings.current)}
@@ -523,6 +533,24 @@ export function LineupPage() {
                 {saveStatus === 'saving' && 'Saving…'}
                 {saveStatus === 'saved' && '✓ Saved'}
               </span>
+              {isMobile && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-soft">Edit</span>
+                  <Switch
+                    checked={editing}
+                    onChange={setEditing}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                      editing ? 'bg-red-600' : 'bg-firm'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                        editing ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </Switch>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -558,6 +586,7 @@ export function LineupPage() {
                     return (
                       <PositionList
                         key={position}
+                        editing={editing}
                         position={position}
                         ranked={ranked}
                         onReorder={reorderPosition}
