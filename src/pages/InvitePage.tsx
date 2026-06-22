@@ -38,15 +38,6 @@ export function InvitePage() {
       if (!data || data.length === 0) { setNotFound(true); return; }
       const d = data[0] as InviteDetails;
       setDetails(d);
-      if (user) {
-        const { data: membership } = await supabase
-          .from('season_members')
-          .select('user_id')
-          .eq('season_id', d.season_id)
-          .eq('user_id', user.id)
-          .single();
-        if (membership) { setAlreadyMember(true); return; }
-      }
       const saved = sessionStorage.getItem(STORAGE_KEY) as Role | null;
       if (saved === 'Head Coach' && !d.has_head_coach) {
         setRole('Head Coach');
@@ -57,6 +48,18 @@ export function InvitePage() {
       }
     })();
   }, [token]);
+
+  // Check membership separately — user may not be initialized when details first load
+  useEffect(() => {
+    if (!user || !details || alreadyMember) return;
+    (async () => {
+      const [{ data: membership }, { data: owned }] = await Promise.all([
+        supabase.from('season_members').select('user_id').eq('season_id', details.season_id).eq('user_id', user.id).single(),
+        supabase.from('seasons').select('id').eq('id', details.season_id).eq('user_id', user.id).single(),
+      ]);
+      if (membership || owned) setAlreadyMember(true);
+    })();
+  }, [user, details]);
 
   const accept = (chosenRole: Role) => {
     if (!token) return;
