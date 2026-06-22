@@ -19,7 +19,7 @@ export function LineupLayout() {
               className={({ isActive }) =>
                 `px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'text-strong border-green-500'
+                    ? 'text-strong border-red-600'
                     : 'text-soft hover:text-mid border-transparent'
                 }`
               }

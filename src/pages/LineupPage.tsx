@@ -166,7 +166,7 @@ function PositionList({
           {ranked.length < 8 && (
             <button
               onClick={() => onAdd(position)}
-              className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-green-500/50 hover:text-green-400 rounded-lg px-2.5 py-1 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-red-600/50 hover:text-red-500 rounded-lg px-2.5 py-1 transition-colors"
             >
               <Plus size={11} />
               Add player
@@ -224,7 +224,7 @@ function PlayerPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            className="w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:border-green-500/50 mb-3"
+            className="w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:border-red-600/50 mb-3"
           />
           <div className="space-y-0.5 max-h-64 overflow-y-auto -mx-1 mb-3">
             {sorted.length === 0 && (
@@ -239,11 +239,11 @@ function PlayerPicker({
                   key={player.id}
                   onClick={() => toggle(player.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                    isSelected ? 'bg-green-500/10 border border-green-500/20' : 'hover:bg-well border border-transparent'
+                    isSelected ? 'bg-red-600/10 border border-red-600/20' : 'hover:bg-well border border-transparent'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                    isSelected ? 'bg-green-500 border-green-500' : 'border-firm'
+                    isSelected ? 'bg-red-600 border-red-600' : 'border-firm'
                   }`}>
                     {isSelected && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -251,7 +251,7 @@ function PlayerPicker({
                       </svg>
                     )}
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-green-500/15 border border-green-500/20 flex items-center justify-center text-xs font-bold text-green-400 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-red-600/15 border border-red-600/20 flex items-center justify-center text-xs font-bold text-red-500 shrink-0">
                     {player.number != null ? player.number : (player.firstName[0] + player.lastName[0]).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -261,7 +261,7 @@ function PlayerPicker({
                     </div>
                   </div>
                   {playsPos && (
-                    <span className="text-xs bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-xs bg-red-600/15 text-red-500 px-2 py-0.5 rounded-full shrink-0">
                       plays {position}
                     </span>
                   )}
@@ -272,7 +272,7 @@ function PlayerPicker({
           <button
             onClick={() => selected.size > 0 && onPick([...selected])}
             disabled={selected.size === 0}
-            className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors"
+            className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-4 py-2.5 transition-colors"
           >
             {selected.size === 0 ? 'Select players' : `Add ${selected.size} player${selected.size !== 1 ? 's' : ''}`}
           </button>
@@ -570,7 +570,7 @@ export function LineupPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs text-green-500 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
                     <CheckCircle size={13} />
                     All assignments look good
                   </div>

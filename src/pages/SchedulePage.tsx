@@ -55,7 +55,7 @@ function GameForm({
       <Input label="Opponent" onChange={(e) => set('opponent', e.target.value)} placeholder="Team name" required value={form.opponent} />
       <Input label="Location / Field" onChange={(e) => set('location', e.target.value)} placeholder="e.g. Memorial Park Field 1" value={form.location} />
       <div className="flex items-center gap-2">
-        <input checked={form.isHome} className="accent-green-500" id="isHome" onChange={(e) => set('isHome', e.target.checked)} type="checkbox" />
+        <input checked={form.isHome} className="accent-red-600" id="isHome" onChange={(e) => set('isHome', e.target.checked)} type="checkbox" />
         <label className="text-sm text-mid" htmlFor="isHome">Home game</label>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -137,7 +137,7 @@ function WebCalImport({
         <label className="block text-xs font-medium text-soft mb-1">WebCal or HTTPS URL</label>
         <div className="flex gap-2">
           <input
-            className="flex-1 bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-green-500/50"
+            className="flex-1 bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-red-600/50"
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
             placeholder="webcal:// or https://..."
@@ -232,7 +232,7 @@ function AddGameModal({
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             checked={replace}
-            className="accent-green-500"
+            className="accent-red-600"
             onChange={(e) => setReplace(e.target.checked)}
             type="checkbox"
           />
@@ -286,7 +286,7 @@ function GameCard({ g }: { g: Game }) {
         )}
         {g.location && (
           <a
-            className="flex items-center gap-1 text-xs text-ghost hover:text-green-400 transition-colors mt-0.5 w-fit"
+            className="flex items-center gap-1 text-xs text-ghost hover:text-red-500 transition-colors mt-0.5 w-fit"
             href={`https://maps.google.com/?q=${encodeURIComponent(g.location)}`}
             rel="noopener noreferrer"
             target="_blank"
@@ -296,7 +296,7 @@ function GameCard({ g }: { g: Game }) {
         )}
       </div>
 
-      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${g.isHome ? 'bg-green-500/15 text-green-400' : 'bg-well text-ghost'}`}>
+      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${g.isHome ? 'bg-red-600/15 text-red-500' : 'bg-well text-ghost'}`}>
         {g.isHome ? 'Home' : 'Away'}
       </span>
     </div>

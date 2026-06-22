@@ -97,7 +97,7 @@ function PlayerForm({
               type="button"
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                 form.positions.includes(pos)
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-red-600 text-white'
                   : 'bg-well text-soft border border-firm hover:border-firm hover:text-mid'
               }`}
             >
@@ -183,7 +183,7 @@ export function TeamPage() {
                 onClick={handleCopyInvite}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   copied
-                    ? 'bg-green-500/15 text-green-400'
+                    ? 'bg-red-600/15 text-red-500'
                     : 'bg-well text-soft hover:text-mid border border-firm hover:border-firm'
                 }`}
               >
@@ -217,13 +217,13 @@ export function TeamPage() {
                   <div className="flex items-center gap-3 mt-0.5">
                     <span className="text-xs text-soft">{c.role}</span>
                     {c.phone && (
-                      <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`tel:${c.phone}`}>
+                      <a className="text-xs text-ghost flex items-center gap-1 hover:text-red-500" href={`tel:${c.phone}`}>
                         <Phone size={11} /> {c.phone}
                       </a>
                     )}
                   </div>
                 </div>
-                {canManageRoles && (
+                {(canManageRoles || c.email?.toLowerCase() === user?.email?.toLowerCase()) && (
                   <div className="flex gap-1 shrink-0">
                     <IconButton onClick={() => setEditingCoach(c)}><PencilSimple size={15} /></IconButton>
                     {isOwner && (
@@ -262,7 +262,7 @@ export function TeamPage() {
           <div className="space-y-2">
             {roster.map((p) => (
               <div className="bg-panel rounded-xl border border-subtle p-3 flex items-start gap-3" key={p.id}>
-                <div className="w-10 h-10 rounded-full bg-green-500/15 border border-green-500/20 flex items-center justify-center font-bold text-sm text-green-400 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-red-600/15 border border-red-600/20 flex items-center justify-center font-bold text-sm text-red-500 shrink-0">
                   {p.number != null ? `#${p.number}` : (p.firstName[0] + p.lastName[0]).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -277,12 +277,12 @@ export function TeamPage() {
                   {(p.parentPhone || p.parentEmail) && (
                     <div className="flex gap-3 mt-1">
                       {p.parentPhone && (
-                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`tel:${p.parentPhone}`}>
+                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-red-500" href={`tel:${p.parentPhone}`}>
                           <Phone size={11} /> {p.parentPhone}
                         </a>
                       )}
                       {p.parentEmail && (
-                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`mailto:${p.parentEmail}`}>
+                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-red-500" href={`mailto:${p.parentEmail}`}>
                           <Envelope size={11} /> {p.parentEmail}
                         </a>
                       )}

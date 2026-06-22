@@ -26,7 +26,7 @@ function SeasonNav({ seasonId, variant }: { seasonId: string; variant: 'inline' 
           to={path ? `/seasons/${seasonId}/${path}` : `/seasons/${seasonId}`}
           end={end}
           className={({ isActive }) =>
-            `${base} ${isActive ? 'text-strong border-green-500' : 'text-soft hover:text-mid border-transparent'}`
+            `${base} ${isActive ? 'text-strong border-red-600' : 'text-soft hover:text-mid border-transparent'}`
           }
         >
           {label}
@@ -64,7 +64,7 @@ export function Layout() {
         {/* Row 1 */}
         <div className="flex items-center gap-3 px-4 h-13 min-w-0">
           <Link to="/seasons" className="flex items-center gap-2 py-3 hover:opacity-80 transition-opacity shrink-0">
-            <Baseball size={22} weight="fill" className="text-green-400" />
+            <Baseball size={22} weight="fill" className="text-red-500" />
             <span className="font-bold text-base tracking-tight text-strong">Dugout</span>
           </Link>
 
@@ -105,7 +105,7 @@ export function Layout() {
                             {[s.teamName ? s.name : null, s.ageGroup, s.year].filter(Boolean).join(' · ')}
                           </div>
                         </div>
-                        {s.id === seasonId && <Check size={13} className="text-green-400 shrink-0" />}
+                        {s.id === seasonId && <Check size={13} className="text-red-500 shrink-0" />}
                       </button>
                     ))}
                     <div className="border-t border-firm mt-1 pt-1">

@@ -80,7 +80,7 @@ export function SeasonsPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-strong truncate">{s.name}</span>
                     {s.teamName && (
-                      <span className="text-xs bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full truncate">
+                      <span className="text-xs bg-red-600/15 text-red-500 px-2 py-0.5 rounded-full truncate">
                         {s.teamName}
                       </span>
                     )}

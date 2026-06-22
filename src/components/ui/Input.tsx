@@ -1,6 +1,6 @@
 import { type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
-const base = 'w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50';
+const base = 'w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:border-red-600/50';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;

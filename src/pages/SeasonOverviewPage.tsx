@@ -77,16 +77,16 @@ export function SeasonOverviewPage() {
       <div className="bg-panel rounded-xl border border-subtle">
         <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
           <div className="flex items-center gap-2 text-sm font-semibold text-strong">
-            <CalendarDots size={16} className="text-green-400" /> Upcoming Games
+            <CalendarDots size={16} className="text-red-500" /> Upcoming Games
           </div>
-          <Link to="schedule" relative="path" className="text-xs text-green-400 font-medium hover:text-green-300">
+          <Link to="schedule" relative="path" className="text-xs text-red-500 font-medium hover:text-red-400">
             View all
           </Link>
         </div>
         {upcoming.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-soft">
             No upcoming games.{' '}
-            <Link to="schedule" relative="path" className="text-green-400 font-medium hover:text-green-300">
+            <Link to="schedule" relative="path" className="text-red-500 font-medium hover:text-red-400">
               Add one
             </Link>
           </div>
@@ -100,7 +100,7 @@ export function SeasonOverviewPage() {
                     {formatDate(g.date)}{g.location ? ` · ${g.location}` : ''}
                   </div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${g.isHome ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${g.isHome ? 'bg-red-600/15 text-red-500' : 'bg-red-500/15 text-red-400'}`}>
                   {g.isHome ? 'Home' : 'Away'}
                 </span>
               </div>
@@ -113,9 +113,9 @@ export function SeasonOverviewPage() {
       <div className="bg-panel rounded-xl border border-subtle">
         <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
           <div className="flex items-center gap-2 text-sm font-semibold text-strong">
-            <Users size={16} className="text-green-400" /> Team
+            <Users size={16} className="text-red-500" /> Team
           </div>
-          <Link className="text-xs text-green-400 font-medium hover:text-green-300" relative="path" to="team">
+          <Link className="text-xs text-red-500 font-medium hover:text-red-400" relative="path" to="team">
             Manage
           </Link>
         </div>
@@ -123,7 +123,7 @@ export function SeasonOverviewPage() {
         {staff.length === 0 && roster.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-soft">
             No players or coaches yet.{' '}
-            <Link className="text-green-400 font-medium hover:text-green-300" relative="path" to="team">
+            <Link className="text-red-500 font-medium hover:text-red-400" relative="path" to="team">
               Add players
             </Link>
           </div>
@@ -152,7 +152,7 @@ export function SeasonOverviewPage() {
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2">
                     {roster.slice(0, 6).map((p) => (
-                      <div className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-panel flex items-center justify-center text-xs font-bold text-green-400" key={p.id}>
+                      <div className="w-8 h-8 rounded-full bg-red-600/20 border-2 border-panel flex items-center justify-center text-xs font-bold text-red-500" key={p.id}>
                         {p.firstName[0]}{p.lastName[0]}
                       </div>
                     ))}

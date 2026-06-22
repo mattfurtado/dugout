@@ -83,7 +83,7 @@ export function InvitePage() {
     <div className="min-h-screen bg-page flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 mb-8 justify-center">
-          <Baseball size={24} weight="fill" className="text-green-500" />
+          <Baseball size={24} weight="fill" className="text-red-600" />
           <span className="text-lg font-bold text-strong">Dugout</span>
         </div>
 
@@ -118,7 +118,7 @@ export function InvitePage() {
                       disabled
                         ? 'border-subtle text-ghost cursor-not-allowed'
                         : active
-                        ? 'border-green-500 bg-green-500/10 text-green-400'
+                        ? 'border-red-600 bg-red-600/10 text-red-500'
                         : 'border-firm text-soft hover:border-firm hover:text-mid'
                     }`}
                   >
@@ -132,7 +132,7 @@ export function InvitePage() {
             {user ? (
               <button
                 onClick={() => accept(role)}
-                className="w-full bg-green-500 hover:bg-green-400 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
+                className="w-full bg-red-600 hover:bg-red-500 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
               >
                 Accept Invite
               </button>
@@ -164,14 +164,14 @@ export function InvitePage() {
 
         {done && details && (
           <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
-              <Baseball size={24} weight="fill" className="text-green-400" />
+            <div className="w-12 h-12 rounded-full bg-red-600/15 flex items-center justify-center mx-auto mb-4">
+              <Baseball size={24} weight="fill" className="text-red-500" />
             </div>
             <h2 className="text-base font-bold text-strong mb-1">You're in!</h2>
             <p className="text-sm text-soft mb-5">You've joined {teamLabel} as {role}.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}
-              className="w-full bg-green-500 hover:bg-green-400 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
+              className="w-full bg-red-600 hover:bg-red-500 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
             >
               Go to Season
             </button>
