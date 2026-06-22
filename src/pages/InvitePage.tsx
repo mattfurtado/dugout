@@ -25,6 +25,7 @@ export function InvitePage() {
 
   const [details, setDetails] = useState<InviteDetails | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [alreadyMember, setAlreadyMember] = useState(false);
   const [role, setRole] = useState<Role>('Assistant Coach');
   const [accepting, setAccepting] = useState(false);
   const [done, setDone] = useState(false);
@@ -36,6 +37,15 @@ export function InvitePage() {
       if (!data || data.length === 0) { setNotFound(true); return; }
       const d = data[0] as InviteDetails;
       setDetails(d);
+      if (user) {
+        const { data: membership } = await supabase
+          .from('season_members')
+          .select('user_id')
+          .eq('season_id', d.season_id)
+          .eq('user_id', user.id)
+          .single();
+        if (membership) { setAlreadyMember(true); return; }
+      }
       const saved = sessionStorage.getItem(STORAGE_KEY) as Role | null;
       if (saved === 'Head Coach' && !d.has_head_coach) {
         setRole('Head Coach');
@@ -93,13 +103,26 @@ export function InvitePage() {
           </div>
         )}
 
+        {alreadyMember && details && (
+          <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
+            <h2 className="text-base font-bold text-strong mb-1">You're already a coach</h2>
+            <p className="text-sm text-soft mb-5">You've already joined {teamLabel}.</p>
+            <button
+              onClick={() => navigate(`/seasons/${details.season_id}`)}
+              className="w-full bg-red-600 hover:bg-red-500 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"
+            >
+              Go to Season
+            </button>
+          </div>
+        )}
+
         {!notFound && !details && (
           <div className="flex justify-center">
             <Spinner />
           </div>
         )}
 
-        {details && !done && !accepting && (
+        {details && !done && !accepting && !alreadyMember && (
           <div className="bg-panel border border-subtle rounded-2xl p-6">
             <h1 className="text-base font-bold text-strong">{teamLabel}</h1>
             {subLabel && <p className="text-xs text-soft mt-0.5">{subLabel}</p>}
