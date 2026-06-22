@@ -129,7 +129,7 @@ function PositionList({
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 500, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -420,6 +420,7 @@ export function LineupPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle');
 
   const initialized = useRef(false);
+  const initialRankings = useRef<LineupRankings>({});
   const lastSaved = useRef('{}');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -430,6 +431,7 @@ export function LineupPage() {
     loadLineupRankings(seasonId, user.id).then(() => {
       const loaded = useStore.getState().lineupRankings[seasonId] ?? {};
       setLocal(loaded);
+      initialRankings.current = loaded;
       lastSaved.current = JSON.stringify(loaded);
       initialized.current = true;
     });
@@ -507,10 +509,20 @@ export function LineupPage() {
             </button>
           </div>
           {tab === 'my' && (
-            <span className="text-xs text-ghost">
-              {saveStatus === 'saving' && 'Saving…'}
-              {saveStatus === 'saved' && '✓ Saved'}
-            </span>
+            <div className="flex items-center gap-3">
+              {JSON.stringify(local) !== JSON.stringify(initialRankings.current) && (
+                <button
+                  className="text-xs text-ghost hover:text-soft transition-colors"
+                  onClick={() => setLocal(initialRankings.current)}
+                >
+                  Restore
+                </button>
+              )}
+              <span className="text-xs text-ghost">
+                {saveStatus === 'saving' && 'Saving…'}
+                {saveStatus === 'saved' && '✓ Saved'}
+              </span>
+            </div>
           )}
         </div>
         <div className="flex sm:inline-flex bg-well rounded-lg p-0.5">
