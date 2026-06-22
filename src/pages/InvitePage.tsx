@@ -33,7 +33,8 @@ export function InvitePage() {
 
   useEffect(() => {
     if (!token) return;
-    supabase.rpc('get_invite_details', { invite_id: token }).then(({ data }) => {
+    (async () => {
+      const { data } = await supabase.rpc('get_invite_details', { invite_id: token });
       if (!data || data.length === 0) { setNotFound(true); return; }
       const d = data[0] as InviteDetails;
       setDetails(d);
@@ -54,7 +55,7 @@ export function InvitePage() {
       } else {
         setRole(d.has_head_coach ? 'Assistant Coach' : 'Head Coach');
       }
-    });
+    })();
   }, [token]);
 
   const accept = (chosenRole: Role) => {
