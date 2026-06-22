@@ -168,7 +168,7 @@ export function InvitePage() {
               <Baseball size={24} weight="fill" className="text-green-400" />
             </div>
             <h2 className="text-base font-bold text-strong mb-1">You're in!</h2>
-            <p className="text-sm text-soft mb-5">You've joined {teamLabel} as {role}. Head to the lineup ranker to submit your rankings.</p>
+            <p className="text-sm text-soft mb-5">You've joined {teamLabel} as {role}.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}
               className="w-full bg-green-500 hover:bg-green-400 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"

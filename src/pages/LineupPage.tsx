@@ -161,7 +161,7 @@ function PositionList({
               ))}
             </SortableContext>
           </DndContext>
-          {ranked.length < 5 && (
+          {ranked.length < 8 && (
             <button
               onClick={() => onAdd(position)}
               className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-green-500/50 hover:text-green-400 rounded-lg px-2.5 py-1 transition-colors"
@@ -451,7 +451,7 @@ export function LineupPage() {
   const addPlayers = (position: LineupPosition, playerIds: string[]) => {
     setLocal((prev) => {
       const current = prev[position] ?? [];
-      const slots = 5 - current.length;
+      const slots = 8 - current.length;
       const toAdd = playerIds.filter((id) => !current.includes(id)).slice(0, slots);
       return { ...prev, [position]: [...current, ...toAdd] };
     });
@@ -596,6 +596,9 @@ export function LineupPage() {
               <h3 className="font-semibold text-strong mb-2">Assignment requirements</h3>
               <p className="text-soft leading-relaxed">
                 Each player you rank must appear in at least one <span className="text-mid font-medium">infield position</span> (C, 1B, 2B, 3B, or SS) and at least one <span className="text-mid font-medium">outfield position</span> (LF, CF, or RF). Players missing either will show a warning until the gap is filled.
+              </p>
+              <p className="text-soft leading-relaxed mt-2">
+                You can rank up to <span className="text-mid font-medium">8 players per position</span>.
               </p>
             </div>
             <div className="border-t border-subtle pt-5">

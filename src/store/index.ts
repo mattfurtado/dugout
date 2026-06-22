@@ -66,15 +66,24 @@ export const useStore = create<AppState>((set) => ({
     const ownedSeasonIds = new Set((s.data ?? []).map((x) => (x as { id: string }).id));
     const ownedPlayerIds = new Set((p.data ?? []).map((x) => (x as { id: string }).id));
 
+    const ownedGameIds = new Set((g.data ?? []).map((x) => (x as { id: string }).id));
+    const ownedCoachIds = new Set((c.data ?? []).map((x) => (x as { id: string }).id));
+
     let extraSeasons: unknown[] = [];
     let extraPlayers: unknown[] = [];
+    let extraGames: unknown[] = [];
+    let extraCoaches: unknown[] = [];
     if (memberIds.length > 0) {
-      const [ms, mp] = await Promise.all([
+      const [ms, mp, mg, mc] = await Promise.all([
         supabase.from('seasons').select('*').in('id', memberIds),
         supabase.from('players').select('*').in('season_id', memberIds),
+        supabase.from('games').select('*').in('season_id', memberIds),
+        supabase.from('coaches').select('*').in('season_id', memberIds),
       ]);
       extraSeasons = (ms.data ?? []).filter((r) => !ownedSeasonIds.has((r as { id: string }).id));
       extraPlayers = (mp.data ?? []).filter((r) => !ownedPlayerIds.has((r as { id: string }).id));
+      extraGames = (mg.data ?? []).filter((r) => !ownedGameIds.has((r as { id: string }).id));
+      extraCoaches = (mc.data ?? []).filter((r) => !ownedCoachIds.has((r as { id: string }).id));
     }
 
     set({
@@ -82,12 +91,18 @@ export const useStore = create<AppState>((set) => ({
         ...(s.data ?? []).map(mapSeason),
         ...extraSeasons.map((r) => mapSeason(r as Parameters<typeof mapSeason>[0])),
       ],
-      games: (g.data ?? []).map(mapGame),
+      games: [
+        ...(g.data ?? []).map(mapGame),
+        ...extraGames.map((r) => mapGame(r as Parameters<typeof mapGame>[0])),
+      ],
       players: [
         ...(p.data ?? []).map(mapPlayer),
         ...extraPlayers.map((r) => mapPlayer(r as Parameters<typeof mapPlayer>[0])),
       ],
-      coaches: (c.data ?? []).map(mapCoach),
+      coaches: [
+        ...(c.data ?? []).map(mapCoach),
+        ...extraCoaches.map((r) => mapCoach(r as Parameters<typeof mapCoach>[0])),
+      ],
       loading: false,
       initialized: true,
     });
