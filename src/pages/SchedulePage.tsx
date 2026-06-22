@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDots, CircleNotch, Link as LinkIcon, MapPin, PencilSimple, Plus, Trash, UploadSimple, WarningCircle } from '@phosphor-icons/react';
-import { format, parseISO } from 'date-fns';
+import { ArrowLeft, CalendarDots, CircleNotch, Link as LinkIcon, MapPin, Plus, UploadSimple, WarningCircle } from '@phosphor-icons/react';
+import { format, isBefore, parseISO, startOfToday } from 'date-fns';
 import { useAuthStore } from '../store/authStore';
 import { useStore } from '../store';
 import { Button } from '../components/ui/Button';
 import { Divider } from '../components/ui/Divider';
 import { EmptyState } from '../components/ui/EmptyState';
-import { IconButton } from '../components/ui/IconButton';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -51,7 +50,7 @@ function GameForm({
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
       <div className="grid grid-cols-2 gap-3">
         <Input label="Date" onChange={(e) => set('date', e.target.value)} required type="date" value={form.date} />
-        <Input label="Time" onChange={(e) => set('time', e.target.value)} type="time" value={form.time} />
+        <Input label="Time (ET)" onChange={(e) => set('time', e.target.value)} type="time" value={form.time} />
       </div>
       <Input label="Opponent" onChange={(e) => set('opponent', e.target.value)} placeholder="Team name" required value={form.opponent} />
       <Input label="Location / Field" onChange={(e) => set('location', e.target.value)} placeholder="e.g. Memorial Park Field 1" value={form.location} />
@@ -176,16 +175,21 @@ function AddGameModal({
   onAddGame,
   onAddGames,
   onClose,
+  onReplaceGames,
   seasonId,
 }: {
   myTeam: string;
   onAddGame: (data: Omit<Game, 'id'>) => void;
   onAddGames: (games: Omit<Game, 'id'>[]) => void;
   onClose: () => void;
+  onReplaceGames: (games: Omit<Game, 'id'>[]) => void;
   seasonId: string;
 }) {
+  const [replace, setReplace] = useState(true);
   const [view, setView] = useState<'main' | 'webcal'>('main');
   const csvRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = replace ? onReplaceGames : onAddGames;
 
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -194,7 +198,7 @@ function AddGameModal({
     reader.onload = (ev) => {
       const csv = ev.target?.result as string;
       const parsed = parseCSV(csv, seasonId);
-      if (parsed.length) { onAddGames(parsed); onClose(); }
+      if (parsed.length) { handleImport(parsed); onClose(); }
       e.target.value = '';
     };
     reader.readAsText(file);
@@ -206,7 +210,7 @@ function AddGameModal({
         <WebCalImport
           myTeam={myTeam}
           onBack={() => setView('main')}
-          onImport={(games) => { onAddGames(games); onClose(); }}
+          onImport={(games) => { handleImport(games); onClose(); }}
           seasonId={seasonId}
         />
       </Modal>
@@ -225,6 +229,15 @@ function AddGameModal({
           </Button>
         </div>
         <input accept=".csv" className="hidden" onChange={handleCSV} ref={csvRef} type="file" />
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            checked={replace}
+            className="accent-green-500"
+            onChange={(e) => setReplace(e.target.checked)}
+            type="checkbox"
+          />
+          <span className="text-sm text-soft">Replace existing games</span>
+        </label>
 
         <Divider label="or add manually" />
 
@@ -238,30 +251,73 @@ function AddGameModal({
   );
 }
 
-function formatDate(date: string) {
-  try { return format(parseISO(date), 'EEE, MMM d'); } catch { return date; }
-}
-
 function formatTime(time: string) {
   if (!time) return '';
   try {
     const [h, m] = time.split(':').map(Number);
     const suffix = h >= 12 ? 'pm' : 'am';
-    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${suffix}`;
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${suffix} ET`;
   } catch { return time; }
+}
+
+function GameCard({ g }: { g: Game }) {
+  const date = parseISO(g.date);
+  return (
+    <div className="bg-panel rounded-xl border border-subtle p-4 flex items-start gap-4">
+      <div className="shrink-0 w-11 text-center">
+        <div className="text-xs font-medium text-soft uppercase leading-none">{format(date, 'MMM')}</div>
+        <div className="text-2xl font-bold text-strong leading-tight">{format(date, 'd')}</div>
+        <div className="text-xs text-ghost leading-none">{format(date, 'EEE')}</div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-strong">
+            {g.isHome ? 'vs' : '@'} {g.opponent}
+          </span>
+          {g.result && (
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${RESULT_COLORS[g.result]}`}>
+              {g.result}{g.myScore != null ? ` ${g.myScore}–${g.opponentScore ?? '?'}` : ''}
+            </span>
+          )}
+        </div>
+        {g.time && (
+          <div className="text-xs text-soft mt-0.5">{formatTime(g.time)}</div>
+        )}
+        {g.location && (
+          <a
+            className="flex items-center gap-1 text-xs text-ghost hover:text-green-400 transition-colors mt-0.5 w-fit"
+            href={`https://maps.google.com/?q=${encodeURIComponent(g.location)}`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <MapPin size={11} /> {g.location}
+          </a>
+        )}
+      </div>
+
+      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${g.isHome ? 'bg-green-500/15 text-green-400' : 'bg-well text-ghost'}`}>
+        {g.isHome ? 'Home' : 'Away'}
+      </span>
+    </div>
+  );
 }
 
 export function SchedulePage() {
   const { id: seasonId } = useParams<{ id: string }>();
-  const { games, seasons, addGame, addGames, updateGame, deleteGame } = useStore();
+  const { games, seasons, addGame, addGames, replaceSeasonGames } = useStore();
   const { user } = useAuthStore();
-  const [editing, setEditing] = useState<Game | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
   const season = seasons.find((s) => s.id === seasonId);
+  const today = startOfToday();
+
   const seasonGames = games
     .filter((g) => g.seasonId === seasonId)
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  const upcoming = seasonGames.filter((g) => !isBefore(parseISO(g.date), today));
+  const past = seasonGames.filter((g) => isBefore(parseISO(g.date), today));
 
   if (!seasonId) {
     return (
@@ -277,7 +333,7 @@ export function SchedulePage() {
     <div className="p-4 max-w-3xl mx-auto">
       <PageHeader
         action={<Button onClick={() => setShowAdd(true)} size="sm"><Plus size={15} /> Add Game</Button>}
-        className="mb-1 pt-2"
+        className="mb-4 pt-2"
         title="Schedule"
       />
 
@@ -289,37 +345,24 @@ export function SchedulePage() {
           title="No games yet"
         />
       ) : (
-        <div className="space-y-2">
-          {seasonGames.map((g) => (
-            <div className="bg-panel rounded-xl border border-subtle p-3 flex items-start gap-3" key={g.id}>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-strong text-sm">
-                    {g.isHome ? 'vs' : '@'} {g.opponent}
-                  </span>
-                  {g.result && (
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${RESULT_COLORS[g.result]}`}>
-                      {g.result}{g.myScore != null ? ` ${g.myScore}–${g.opponentScore ?? '?'}` : ''}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-soft">
-                  <span className="flex items-center gap-1">
-                    <CalendarDots size={11} /> {formatDate(g.date)}{g.time ? ` · ${formatTime(g.time)}` : ''}
-                  </span>
-                  {g.location && (
-                    <span className="flex items-center gap-1 truncate">
-                      <MapPin size={11} /> {g.location}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <IconButton onClick={() => setEditing(g)}><PencilSimple size={15} /></IconButton>
-                <IconButton onClick={() => deleteGame(g.id)} variant="danger"><Trash size={15} /></IconButton>
+        <div className="space-y-6">
+          {upcoming.length > 0 && (
+            <div>
+              <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Upcoming</h2>
+              <div className="space-y-2">
+                {upcoming.map((g) => <GameCard g={g} key={g.id} />)}
               </div>
             </div>
-          ))}
+          )}
+
+          {past.length > 0 && (
+            <div>
+              <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Past Games</h2>
+              <div className="space-y-2">
+                {[...past].reverse().map((g) => <GameCard g={g} key={g.id} />)}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -329,18 +372,9 @@ export function SchedulePage() {
           onAddGame={(data) => { if (user) addGame(data, user.id); }}
           onAddGames={(gs) => { if (user) addGames(gs, user.id); }}
           onClose={() => setShowAdd(false)}
+          onReplaceGames={(gs) => { if (user) replaceSeasonGames(seasonId, gs, user.id); }}
           seasonId={seasonId}
         />
-      )}
-      {editing && (
-        <Modal onClose={() => setEditing(null)} title="Edit Game">
-          <GameForm
-            initial={editing}
-            onCancel={() => setEditing(null)}
-            onSubmit={(data) => { updateGame(editing.id, data); setEditing(null); }}
-            seasonId={seasonId}
-          />
-        </Modal>
       )}
     </div>
   );

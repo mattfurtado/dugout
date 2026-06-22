@@ -14,6 +14,18 @@ function parseDate(value: string): { date: string; time: string } {
   }
   const m = clean.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
   if (m) {
+    const isUtc = clean.includes('Z');
+    if (isUtc) {
+      const utc = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00Z`);
+      const etDate = utc.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const etTime = utc.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        hour12: false,
+        minute: '2-digit',
+        timeZone: 'America/New_York',
+      }).slice(0, 5);
+      return { date: etDate, time: etTime };
+    }
     return {
       date: `${m[1]}-${m[2]}-${m[3]}`,
       time: `${m[4]}:${m[5]}`,
@@ -81,14 +93,18 @@ export function parseICS(ics: string, seasonId: string, myTeam = ''): Omit<Game,
     if (!dtstart && !summary) continue;
 
     const { date, time } = parseDate(dtstart);
-    const { opponent, isHome } = extractOpponentAndHome(summary, myTeam);
+    const { opponent, isHome: isHomeBySummary } = extractOpponentAndHome(summary, myTeam);
+    const cleanLocation = location.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim();
+    const isHome = cleanLocation
+      ? /reading/i.test(cleanLocation)
+      : isHomeBySummary;
 
     games.push({
       seasonId,
       date,
       time,
       opponent,
-      location: location.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim(),
+      location: cleanLocation,
       isHome,
       notes: description.replace(/\\n/g, '\n').replace(/\\,/g, ',').trim() || undefined,
     });

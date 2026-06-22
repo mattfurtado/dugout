@@ -19,6 +19,7 @@ interface AppState {
 
   addGame: (data: Omit<Game, 'id'>, userId: string) => Promise<void>;
   addGames: (games: Omit<Game, 'id'>[], userId: string) => Promise<void>;
+  replaceSeasonGames: (seasonId: string, games: Omit<Game, 'id'>[], userId: string) => Promise<void>;
   updateGame: (id: string, data: Partial<Game>) => Promise<void>;
   deleteGame: (id: string) => Promise<void>;
 
@@ -139,6 +140,16 @@ export const useStore = create<AppState>((set) => ({
       .from('games').insert(games.map((g) => toGameRow(g, userId))).select();
     if (error || !rows) return;
     set((s) => ({ games: [...s.games, ...rows.map(mapGame)] }));
+  },
+
+  replaceSeasonGames: async (seasonId, games, userId) => {
+    await supabase.from('games').delete().eq('season_id', seasonId).eq('user_id', userId);
+    const { data: rows, error } = await supabase
+      .from('games').insert(games.map((g) => toGameRow(g, userId))).select();
+    if (error || !rows) return;
+    set((s) => ({
+      games: [...s.games.filter((g) => g.seasonId !== seasonId), ...rows.map(mapGame)],
+    }));
   },
 
   updateGame: async (id, data) => {

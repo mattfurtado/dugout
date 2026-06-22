@@ -39,8 +39,8 @@ function CoachForm({
       <Select label="Role" onChange={(e) => set('role', e.target.value)} value={form.role}>
         {ALL_ROLES.map((r) => <option key={r}>{r}</option>)}
       </Select>
-      <Input label="Phone" onChange={(e) => set('phone', e.target.value)} placeholder="Optional" type="tel" value={form.phone ?? ''} />
       <Input label="Email" onChange={(e) => set('email', e.target.value)} placeholder="Optional" type="email" value={form.email ?? ''} />
+      <Input label="Phone" onChange={(e) => set('phone', e.target.value)} placeholder="Optional" type="tel" value={form.phone ?? ''} />
       <div className="flex gap-2 pt-1">
         <Button className="flex-1" onClick={onCancel} type="button" variant="secondary">Cancel</Button>
         <Button className="flex-1" type="submit">Save</Button>
@@ -219,11 +219,6 @@ export function TeamPage() {
                     {c.phone && (
                       <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`tel:${c.phone}`}>
                         <Phone size={11} /> {c.phone}
-                      </a>
-                    )}
-                    {c.email && (
-                      <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`mailto:${c.email}`}>
-                        <Envelope size={11} /> {c.email}
                       </a>
                     )}
                   </div>
