@@ -15,7 +15,7 @@ function formatDate(date: string) {
 
 export function SeasonOverviewPage() {
   const { id } = useParams<{ id: string }>();
-  const { seasons, games, players, updateSeason } = useStore();
+  const { seasons, games, players, coaches, updateSeason } = useStore();
   const { user } = useAuthStore();
   const [editing, setEditing] = useState(false);
 
@@ -30,6 +30,7 @@ export function SeasonOverviewPage() {
     .slice(0, 3);
 
   const roster = players.filter((p) => p.seasonId === id);
+  const staff = coaches.filter((c) => c.seasonId === id);
   const wins = seasonGames.filter((g) => g.result === 'W').length;
   const losses = seasonGames.filter((g) => g.result === 'L').length;
   const played = seasonGames.filter((g) => g.result).length;
@@ -108,7 +109,7 @@ export function SeasonOverviewPage() {
         )}
       </div>
 
-      {/* Roster summary */}
+      {/* Team summary */}
       <div className="bg-panel rounded-xl border border-subtle">
         <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
           <div className="flex items-center gap-2 text-sm font-semibold text-strong">
@@ -118,28 +119,53 @@ export function SeasonOverviewPage() {
             Manage
           </Link>
         </div>
-        {roster.length === 0 ? (
+
+        {staff.length === 0 && roster.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-soft">
-            No players yet.{' '}
+            No players or coaches yet.{' '}
             <Link className="text-green-400 font-medium hover:text-green-300" relative="path" to="team">
               Add players
             </Link>
           </div>
         ) : (
-          <div className="px-4 py-3 flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {roster.slice(0, 6).map((p) => (
-                <div key={p.id} className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-panel flex items-center justify-center text-xs font-bold text-green-400">
-                  {p.firstName[0]}{p.lastName[0]}
+          <div className="divide-y divide-subtle">
+            {staff.length > 0 && (
+              <div className="px-4 py-3">
+                <div className="text-xs font-medium text-ghost uppercase tracking-wide mb-2">Coaches</div>
+                <div className="space-y-1.5">
+                  {staff.map((c) => (
+                    <div className="flex items-center gap-2" key={c.id}>
+                      <div className="w-6 h-6 rounded-full bg-well border border-firm flex items-center justify-center text-xs font-bold text-soft shrink-0">
+                        {c.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-sm text-strong">{c.name}</span>
+                      <span className="text-xs text-ghost">{c.role}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {roster.length > 6 && (
-                <div className="w-8 h-8 rounded-full bg-well border-2 border-panel flex items-center justify-center text-xs font-medium text-soft">
-                  +{roster.length - 6}
+              </div>
+            )}
+
+            {roster.length > 0 && (
+              <div className="px-4 py-3">
+                <div className="text-xs font-medium text-ghost uppercase tracking-wide mb-2">Players</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    {roster.slice(0, 6).map((p) => (
+                      <div className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-panel flex items-center justify-center text-xs font-bold text-green-400" key={p.id}>
+                        {p.firstName[0]}{p.lastName[0]}
+                      </div>
+                    ))}
+                    {roster.length > 6 && (
+                      <div className="w-8 h-8 rounded-full bg-well border-2 border-panel flex items-center justify-center text-xs font-medium text-soft">
+                        +{roster.length - 6}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm text-soft">{roster.length} player{roster.length !== 1 ? 's' : ''}</span>
                 </div>
-              )}
-            </div>
-            <span className="text-sm text-soft">{roster.length} player{roster.length !== 1 ? 's' : ''}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
