@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CalendarDots, Users, PencilSimple } from '@phosphor-icons/react';
-import { format, parseISO, isAfter, startOfToday } from 'date-fns';
-import { useStore } from '../store';
+import { CalendarDots, PencilSimple, Users } from '@phosphor-icons/react';
+import { format, isAfter, parseISO, startOfToday } from 'date-fns';
 import { useAuthStore } from '../store/authStore';
+import { useStore } from '../store';
+import { IconButton } from '../components/ui/IconButton';
 import { Modal } from '../components/ui/Modal';
 import { SeasonForm } from '../components/seasons/SeasonForm';
 import type { Season } from '../types';
@@ -36,24 +37,21 @@ export function SeasonOverviewPage() {
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-4">
       {/* Season info */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 px-4 py-3 pt-4">
+      <div className="bg-panel rounded-xl border border-subtle px-4 py-3 pt-4">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-0.5 min-w-0">
-            <div className="text-base font-bold text-zinc-100">{season.teamName}</div>
-            <div className="text-sm text-zinc-400">{season.name}</div>
-            <div className="flex items-center gap-2 text-xs text-zinc-500 pt-0.5">
+            <div className="text-base font-bold text-strong">{season.teamName}</div>
+            <div className="text-sm text-soft">{season.name}</div>
+            <div className="flex items-center gap-2 text-xs text-ghost pt-0.5">
               <span>{season.ageGroup}</span>
               <span>·</span>
               <span>{season.year}</span>
             </div>
           </div>
           {season.ownerId === user?.id && (
-            <button
-              onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors shrink-0"
-            >
+            <IconButton className="shrink-0" onClick={() => setEditing(true)}>
               <PencilSimple size={15} />
-            </button>
+            </IconButton>
           )}
         </div>
       </div>
@@ -64,20 +62,20 @@ export function SeasonOverviewPage() {
           {[
             { label: 'Wins', value: wins, color: 'text-green-400' },
             { label: 'Losses', value: losses, color: 'text-red-400' },
-            { label: 'Played', value: played, color: 'text-zinc-300' },
+            { label: 'Played', value: played, color: 'text-mid' },
           ].map(({ label, value, color }) => (
-            <div key={label} className="bg-zinc-900 rounded-xl border border-zinc-800 p-3 text-center">
+            <div key={label} className="bg-panel rounded-xl border border-subtle p-3 text-center">
               <div className={`text-2xl font-bold ${color}`}>{value}</div>
-              <div className="text-xs text-zinc-500">{label}</div>
+              <div className="text-xs text-soft">{label}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Upcoming games */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
+      <div className="bg-panel rounded-xl border border-subtle">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
+          <div className="flex items-center gap-2 text-sm font-semibold text-strong">
             <CalendarDots size={16} className="text-green-400" /> Upcoming Games
           </div>
           <Link to="schedule" relative="path" className="text-xs text-green-400 font-medium hover:text-green-300">
@@ -85,19 +83,19 @@ export function SeasonOverviewPage() {
           </Link>
         </div>
         {upcoming.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-zinc-500">
+          <div className="px-4 py-6 text-center text-sm text-soft">
             No upcoming games.{' '}
             <Link to="schedule" relative="path" className="text-green-400 font-medium hover:text-green-300">
               Add one
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-subtle">
             {upcoming.map((g) => (
               <div key={g.id} className="px-4 py-3 flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-zinc-100">{g.isHome ? 'vs' : '@'} {g.opponent}</div>
-                  <div className="text-xs text-zinc-500">
+                  <div className="text-sm font-medium text-strong">{g.isHome ? 'vs' : '@'} {g.opponent}</div>
+                  <div className="text-xs text-soft">
                     {formatDate(g.date)}{g.location ? ` · ${g.location}` : ''}
                   </div>
                 </div>
@@ -111,19 +109,19 @@ export function SeasonOverviewPage() {
       </div>
 
       {/* Roster summary */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-            <Users size={16} className="text-green-400" /> Roster
+      <div className="bg-panel rounded-xl border border-subtle">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
+          <div className="flex items-center gap-2 text-sm font-semibold text-strong">
+            <Users size={16} className="text-green-400" /> Team
           </div>
-          <Link to="roster" relative="path" className="text-xs text-green-400 font-medium hover:text-green-300">
+          <Link className="text-xs text-green-400 font-medium hover:text-green-300" relative="path" to="team">
             Manage
           </Link>
         </div>
         {roster.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-zinc-500">
+          <div className="px-4 py-6 text-center text-sm text-soft">
             No players yet.{' '}
-            <Link to="roster" relative="path" className="text-green-400 font-medium hover:text-green-300">
+            <Link className="text-green-400 font-medium hover:text-green-300" relative="path" to="team">
               Add players
             </Link>
           </div>
@@ -131,20 +129,21 @@ export function SeasonOverviewPage() {
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="flex -space-x-2">
               {roster.slice(0, 6).map((p) => (
-                <div key={p.id} className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-zinc-900 flex items-center justify-center text-xs font-bold text-green-400">
+                <div key={p.id} className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-panel flex items-center justify-center text-xs font-bold text-green-400">
                   {p.firstName[0]}{p.lastName[0]}
                 </div>
               ))}
               {roster.length > 6 && (
-                <div className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-xs font-medium text-zinc-400">
+                <div className="w-8 h-8 rounded-full bg-well border-2 border-panel flex items-center justify-center text-xs font-medium text-soft">
                   +{roster.length - 6}
                 </div>
               )}
             </div>
-            <span className="text-sm text-zinc-400">{roster.length} player{roster.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-soft">{roster.length} player{roster.length !== 1 ? 's' : ''}</span>
           </div>
         )}
       </div>
+
       {editing && (
         <Modal title="Edit Season" onClose={() => setEditing(false)}>
           <SeasonForm

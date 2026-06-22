@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Baseball } from '@phosphor-icons/react';
-import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { supabase } from '../lib/supabase';
+import { Spinner } from '../components/ui/Spinner';
 
 type InviteDetails = {
   season_id: string;
@@ -29,14 +30,12 @@ export function InvitePage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
-  // Load invite details
   useEffect(() => {
     if (!token) return;
     supabase.rpc('get_invite_details', { invite_id: token }).then(({ data }) => {
       if (!data || data.length === 0) { setNotFound(true); return; }
       const d = data[0] as InviteDetails;
       setDetails(d);
-      // Restore role saved before OAuth redirect, or default sensibly
       const saved = sessionStorage.getItem(STORAGE_KEY) as Role | null;
       if (saved === 'Head Coach' && !d.has_head_coach) {
         setRole('Head Coach');
@@ -48,7 +47,6 @@ export function InvitePage() {
     });
   }, [token]);
 
-  // Accept once signed in and role is chosen
   const accept = (chosenRole: Role) => {
     if (!token) return;
     setAccepting(true);
@@ -60,7 +58,6 @@ export function InvitePage() {
     });
   };
 
-  // Auto-accept when user signs in via OAuth redirect
   useEffect(() => {
     if (!user || !details || done || accepting) return;
     accept(role);
@@ -80,30 +77,30 @@ export function InvitePage() {
     : '';
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-page flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 mb-8 justify-center">
           <Baseball size={24} weight="fill" className="text-green-500" />
-          <span className="text-lg font-bold text-zinc-100">Dugout</span>
+          <span className="text-lg font-bold text-strong">Dugout</span>
         </div>
 
         {notFound && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
-            <p className="text-zinc-400 text-sm">This invite link is invalid or has expired.</p>
+          <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
+            <p className="text-soft text-sm">This invite link is invalid or has expired.</p>
           </div>
         )}
 
         {!notFound && !details && (
           <div className="flex justify-center">
-            <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
+            <Spinner />
           </div>
         )}
 
         {details && !done && !accepting && !user && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <h1 className="text-base font-bold text-zinc-100">{teamLabel}</h1>
-            {subLabel && <p className="text-xs text-zinc-500 mt-0.5">{subLabel}</p>}
-            <p className="text-sm text-zinc-400 mt-4 mb-3">You've been invited to join as a coach. Choose your role:</p>
+          <div className="bg-panel border border-subtle rounded-2xl p-6">
+            <h1 className="text-base font-bold text-strong">{teamLabel}</h1>
+            {subLabel && <p className="text-xs text-soft mt-0.5">{subLabel}</p>}
+            <p className="text-sm text-soft mt-4 mb-3">You've been invited to join as a coach. Choose your role:</p>
 
             <div className="flex gap-2 mb-5">
               {ROLES.map((r) => {
@@ -116,14 +113,14 @@ export function InvitePage() {
                     onClick={() => !disabled && setRole(r)}
                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
                       disabled
-                        ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
+                        ? 'border-subtle text-ghost cursor-not-allowed'
                         : active
                         ? 'border-green-500 bg-green-500/10 text-green-400'
-                        : 'border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
+                        : 'border-firm text-soft hover:border-firm hover:text-mid'
                     }`}
                   >
                     {r}
-                    {disabled && <span className="block text-xs font-normal text-zinc-600 mt-0.5">Already filled</span>}
+                    {disabled && <span className="block text-xs font-normal text-ghost mt-0.5">Already filled</span>}
                   </button>
                 );
               })}
@@ -146,20 +143,20 @@ export function InvitePage() {
         )}
 
         {(accepting || (user && details && !done)) && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
-            <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-zinc-400">Joining {teamLabel}…</p>
+          <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
+            <Spinner className="mx-auto mb-3" />
+            <p className="text-sm text-soft">Joining {teamLabel}…</p>
             {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
           </div>
         )}
 
         {done && details && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
+          <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
             <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
               <Baseball size={24} weight="fill" className="text-green-400" />
             </div>
-            <h2 className="text-base font-bold text-zinc-100 mb-1">You're in!</h2>
-            <p className="text-sm text-zinc-400 mb-5">You've joined {teamLabel} as {role}. Head to the lineup ranker to submit your rankings.</p>
+            <h2 className="text-base font-bold text-strong mb-1">You're in!</h2>
+            <p className="text-sm text-soft mb-5">You've joined {teamLabel} as {role}. Head to the lineup ranker to submit your rankings.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}
               className="w-full bg-green-500 hover:bg-green-400 text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors"

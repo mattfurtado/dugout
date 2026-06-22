@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+/* ── Semantic color tokens ─────────────────────────────────────── */
+
+@theme inline {
+  --color-page:    var(--page);
+  --color-panel:   var(--panel);
+  --color-well:    var(--well);
+  --color-wash:    var(--wash);
+  --color-subtle:  var(--subtle);
+  --color-firm:    var(--firm);
+  --color-strong:  var(--strong);
+  --color-mid:     var(--mid);
+  --color-soft:    var(--soft);
+  --color-ghost:   var(--ghost);
+}
+
+/* Dark theme — default */
+:root {
+  --page:   #09090b;
+  --panel:  #18181b;
+  --well:   #27272a;
+  --wash:   #3f3f46;
+  --subtle: #27272a;
+  --firm:   #3f3f46;
+  --strong: #f4f4f5;
+  --mid:    #d4d4d8;
+  --soft:   #a1a1aa;
+  --ghost:  #52525b;
+}
+
+/* Light theme */
+.light {
+  --page:   #fafafa;
+  --panel:  #ffffff;
+  --well:   #f4f4f5;
+  --wash:   #e4e4e7;
+  --subtle: #e4e4e7;
+  --firm:   #d4d4d8;
+  --strong: #18181b;
+  --mid:    #3f3f46;
+  --soft:   #71717a;
+  --ghost:  #a1a1aa;
+}
+
+/* ── Base ──────────────────────────────────────────────────────── */
+
 * {
   box-sizing: border-box;
 }
@@ -8,16 +53,20 @@ body {
   margin: 0;
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #09090b; /* zinc-950 */
-  color: #f9fafb;
+  background-color: var(--page);
+  color: var(--strong);
 }
 
 #root {
   min-height: 100dvh;
 }
 
-/* Dark date/time/select inputs */
 input[type="date"],
 input[type="time"] {
   color-scheme: dark;
+}
+
+.light input[type="date"],
+.light input[type="time"] {
+  color-scheme: light;
 }

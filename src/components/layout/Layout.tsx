@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router-dom';
-import { Baseball, SignOut, CaretDown, Check } from '@phosphor-icons/react';
+import { Baseball, SignOut, CaretDown, Check, Moon, Sun } from '@phosphor-icons/react';
 import { useAuthStore } from '../../store/authStore';
 import { useStore } from '../../store';
+import { useTheme } from '../../hooks/useTheme';
 
 const SEASON_TABS = [
   { path: '', label: 'Overview', end: true },
   { path: 'schedule', label: 'Schedule', end: false },
-  { path: 'roster', label: 'Roster', end: false },
+  { path: 'team', label: 'Team', end: false },
   { path: 'lineup', label: 'Lineup', end: false },
 ];
 
@@ -25,7 +26,7 @@ function SeasonNav({ seasonId, variant }: { seasonId: string; variant: 'inline' 
           to={path ? `/seasons/${seasonId}/${path}` : `/seasons/${seasonId}`}
           end={end}
           className={({ isActive }) =>
-            `${base} ${isActive ? 'text-zinc-100 border-green-500' : 'text-zinc-500 hover:text-zinc-300 border-transparent'}`
+            `${base} ${isActive ? 'text-strong border-green-500' : 'text-soft hover:text-mid border-transparent'}`
           }
         >
           {label}
@@ -42,6 +43,7 @@ export function Layout() {
   const seasonMatch = useMatch('/seasons/:id/*');
   const seasonId = seasonMatch?.params?.id;
   const currentSeason = seasons.find((s) => s.id === seasonId);
+  const { isLight, toggle } = useTheme();
 
   const [showSwitcher, setShowSwitcher] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
@@ -56,60 +58,60 @@ export function Layout() {
   }, [showSwitcher]);
 
   return (
-    <div className="flex flex-col min-h-dvh bg-zinc-950">
-      <header className="sticky top-0 z-30 bg-zinc-900 border-b border-zinc-800 shadow-sm">
+    <div className="flex flex-col min-h-dvh bg-page">
+      <header className="sticky top-0 z-30 bg-panel border-b border-subtle shadow-sm">
 
         {/* Row 1 */}
         <div className="flex items-center gap-3 px-4 h-13 min-w-0">
           <Link to="/seasons" className="flex items-center gap-2 py-3 hover:opacity-80 transition-opacity shrink-0">
             <Baseball size={22} weight="fill" className="text-green-400" />
-            <span className="font-bold text-base tracking-tight text-zinc-100">Dugout</span>
+            <span className="font-bold text-base tracking-tight text-strong">Dugout</span>
           </Link>
 
           {seasonId && currentSeason && (
             <>
-              <div className="w-px h-4 bg-zinc-700 shrink-0" />
+              <div className="w-px h-4 bg-firm shrink-0" />
 
-              {/* Season switcher — flex-1 on mobile, auto on desktop */}
+              {/* Season switcher */}
               <div ref={switcherRef} className="relative min-w-0 flex-1 sm:flex-none">
                 <button
                   onClick={() => setShowSwitcher((v) => !v)}
                   className="flex items-center gap-1 hover:opacity-80 transition-opacity py-1 text-left min-w-0"
                 >
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-zinc-200 leading-tight truncate max-w-[10rem] sm:max-w-none">
+                    <div className="text-sm font-medium text-mid leading-tight truncate max-w-[10rem] sm:max-w-none">
                       {currentSeason.teamName || currentSeason.name}
                     </div>
-                    <div className="text-xs text-zinc-500 leading-tight truncate max-w-[10rem] sm:max-w-none">
+                    <div className="text-xs text-soft leading-tight truncate max-w-[10rem] sm:max-w-none">
                       {[currentSeason.teamName ? currentSeason.name : null, currentSeason.ageGroup, currentSeason.year].filter(Boolean).join(' · ')}
                     </div>
                   </div>
-                  <CaretDown size={12} className={`text-zinc-500 shrink-0 transition-transform ${showSwitcher ? 'rotate-180' : ''}`} />
+                  <CaretDown size={12} className={`text-soft shrink-0 transition-transform ${showSwitcher ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showSwitcher && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl py-1 z-50">
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-well border border-firm rounded-xl shadow-xl py-1 z-50">
                     {seasons.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => { navigate(`/seasons/${s.id}`); setShowSwitcher(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-700 transition-colors text-left"
+                        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-wash transition-colors text-left"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className={`text-sm truncate ${s.id === seasonId ? 'text-zinc-100 font-medium' : 'text-zinc-300'}`}>
+                          <div className={`text-sm truncate ${s.id === seasonId ? 'text-strong font-medium' : 'text-mid'}`}>
                             {s.teamName || s.name}
                           </div>
-                          <div className="text-xs text-zinc-500 truncate">
+                          <div className="text-xs text-soft truncate">
                             {[s.teamName ? s.name : null, s.ageGroup, s.year].filter(Boolean).join(' · ')}
                           </div>
                         </div>
                         {s.id === seasonId && <Check size={13} className="text-green-400 shrink-0" />}
                       </button>
                     ))}
-                    <div className="border-t border-zinc-700 mt-1 pt-1">
+                    <div className="border-t border-firm mt-1 pt-1">
                       <button
                         onClick={() => { navigate('/seasons'); setShowSwitcher(false); }}
-                        className="w-full px-3 py-2 text-sm text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 transition-colors text-left"
+                        className="w-full px-3 py-2 text-sm text-soft hover:text-mid hover:bg-wash transition-colors text-left"
                       >
                         Manage seasons
                       </button>
@@ -120,7 +122,7 @@ export function Layout() {
 
               {/* Desktop nav — inline in row 1 */}
               <div className="hidden sm:flex items-center h-full">
-                <div className="w-px h-4 bg-zinc-700 shrink-0 mr-1" />
+                <div className="w-px h-4 bg-firm shrink-0 mr-1" />
                 <SeasonNav seasonId={seasonId} variant="inline" />
               </div>
             </>
@@ -129,8 +131,16 @@ export function Layout() {
           <div className="flex-1" />
 
           <button
+            onClick={toggle}
+            className="p-2 rounded-lg text-ghost hover:bg-well hover:text-soft transition-colors shrink-0"
+            aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+          >
+            {isLight ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+
+          <button
             onClick={signOut}
-            className="flex items-center gap-1.5 p-2 rounded-lg text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400 transition-colors shrink-0"
+            className="flex items-center gap-1.5 p-2 rounded-lg text-ghost hover:bg-well hover:text-soft transition-colors shrink-0"
             aria-label="Sign out"
           >
             <SignOut size={16} />
@@ -140,7 +150,7 @@ export function Layout() {
 
         {/* Row 2: season nav tabs — mobile only */}
         {seasonId && currentSeason && (
-          <nav className="sm:hidden flex overflow-x-auto border-t border-zinc-800 px-2 scrollbar-none">
+          <nav className="sm:hidden flex overflow-x-auto border-t border-subtle px-2 scrollbar-none">
             <SeasonNav seasonId={seasonId} variant="row" />
           </nav>
         )}

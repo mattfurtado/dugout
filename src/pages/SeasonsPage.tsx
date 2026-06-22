@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash, List, ArrowRight, PencilSimple } from '@phosphor-icons/react';
+import { ArrowRight, List, Plus } from '@phosphor-icons/react';
 import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { IconButton } from '../components/ui/IconButton';
+import { PageHeader } from '../components/ui/PageHeader';
 import { SeasonForm } from '../components/seasons/SeasonForm';
 import type { Season } from '../types';
 
@@ -13,7 +15,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
   return (
     <div className="relative group/tip">
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-zinc-700 text-zinc-100 text-xs rounded whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity">
+      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-wash text-strong text-xs rounded whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity">
         {label}
       </div>
     </div>
@@ -50,12 +52,11 @@ export function SeasonsPage() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-4 pt-2">
-        <h1 className="text-lg font-bold text-zinc-100">Seasons</h1>
-        <Button size="sm" onClick={() => setShowForm(true)}>
-          <Plus size={16} /> New Season
-        </Button>
-      </div>
+      <PageHeader
+        title="Seasons"
+        action={<Button size="sm" onClick={() => setShowForm(true)}><Plus size={16} /> New Season</Button>}
+        className="mb-4 pt-2"
+      />
 
       {seasons.length === 0 ? (
         <EmptyState
@@ -72,38 +73,32 @@ export function SeasonsPage() {
             .map((s) => (
               <div
                 key={s.id}
-                className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 flex items-center gap-3 hover:border-zinc-700 transition-colors cursor-pointer group"
+                className="bg-panel rounded-xl border border-subtle p-4 flex items-center gap-3 hover:border-firm transition-colors cursor-pointer group"
                 onClick={() => navigate(`/seasons/${s.id}`)}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-zinc-100 truncate">{s.name}</span>
+                    <span className="font-semibold text-strong truncate">{s.name}</span>
                     {s.teamName && (
                       <span className="text-xs bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full truncate">
                         {s.teamName}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-zinc-500 mt-0.5">{s.ageGroup} · {s.year}</div>
+                  <div className="text-xs text-soft mt-0.5">{s.ageGroup} · {s.year}</div>
                 </div>
-                <ArrowRight size={16} className="text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0" />
+                <ArrowRight size={16} className="text-ghost group-hover:text-soft transition-colors shrink-0" />
                 {s.ownerId === user?.id && (
                   <>
                     <Tooltip label="Edit">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setEditing(s); }}
-                        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300 transition-colors shrink-0"
-                      >
-                        <PencilSimple size={16} />
-                      </button>
+                      <IconButton onClick={(e) => { e.stopPropagation(); setEditing(s); }}>
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></svg>
+                      </IconButton>
                     </Tooltip>
                     <Tooltip label="Delete">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteSeason(s.id); }}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400 transition-colors shrink-0"
-                      >
-                        <Trash size={16} />
-                      </button>
+                      <IconButton variant="danger" onClick={(e) => { e.stopPropagation(); deleteSeason(s.id); }}>
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM104,40h48v8H104Zm88,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
+                      </IconButton>
                     </Tooltip>
                   </>
                 )}

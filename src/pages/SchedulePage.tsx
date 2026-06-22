@@ -1,12 +1,16 @@
 import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, UploadSimple, Trash, CalendarDots, MapPin, PencilSimple, Link as LinkIcon, CircleNotch, WarningCircle, ArrowLeft } from '@phosphor-icons/react';
+import { ArrowLeft, CalendarDots, CircleNotch, Link as LinkIcon, MapPin, PencilSimple, Plus, Trash, UploadSimple, WarningCircle } from '@phosphor-icons/react';
 import { format, parseISO } from 'date-fns';
-import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
-import { Modal } from '../components/ui/Modal';
+import { useStore } from '../store';
 import { Button } from '../components/ui/Button';
+import { Divider } from '../components/ui/Divider';
 import { EmptyState } from '../components/ui/EmptyState';
+import { IconButton } from '../components/ui/IconButton';
+import { Input, Select, Textarea } from '../components/ui/Input';
+import { Modal } from '../components/ui/Modal';
+import { PageHeader } from '../components/ui/PageHeader';
 import { parseCSV } from '../lib/parseSchedule';
 import { fetchAndParseICS, parseICS } from '../lib/parseICS';
 import type { Game } from '../types';
@@ -17,18 +21,16 @@ const RESULT_COLORS = {
   T: 'bg-yellow-500/15 text-yellow-400',
 };
 
-const inputCls = 'w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50';
-
 function GameForm({
   initial,
-  seasonId,
-  onSubmit,
   onCancel,
+  onSubmit,
+  seasonId,
 }: {
   initial?: Partial<Game>;
-  seasonId: string;
-  onSubmit: (data: Omit<Game, 'id'>) => void;
   onCancel: () => void;
+  onSubmit: (data: Omit<Game, 'id'>) => void;
+  seasonId: string;
 }) {
   const [form, setForm] = useState<Omit<Game, 'id'>>({
     seasonId,
@@ -46,70 +48,46 @@ function GameForm({
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-3">
+    <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Date</label>
-          <input type="date" required value={form.date} onChange={(e) => set('date', e.target.value)} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Time</label>
-          <input type="time" value={form.time} onChange={(e) => set('time', e.target.value)} className={inputCls} />
-        </div>
+        <Input label="Date" onChange={(e) => set('date', e.target.value)} required type="date" value={form.date} />
+        <Input label="Time" onChange={(e) => set('time', e.target.value)} type="time" value={form.time} />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-1">Opponent</label>
-        <input required value={form.opponent} onChange={(e) => set('opponent', e.target.value)} placeholder="Team name" className={inputCls} />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-1">Location / Field</label>
-        <input value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Memorial Park Field 1" className={inputCls} />
-      </div>
+      <Input label="Opponent" onChange={(e) => set('opponent', e.target.value)} placeholder="Team name" required value={form.opponent} />
+      <Input label="Location / Field" onChange={(e) => set('location', e.target.value)} placeholder="e.g. Memorial Park Field 1" value={form.location} />
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="isHome" checked={form.isHome} onChange={(e) => set('isHome', e.target.checked)} className="accent-green-500" />
-        <label htmlFor="isHome" className="text-sm text-zinc-300">Home game</label>
+        <input checked={form.isHome} className="accent-green-500" id="isHome" onChange={(e) => set('isHome', e.target.checked)} type="checkbox" />
+        <label className="text-sm text-mid" htmlFor="isHome">Home game</label>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Result</label>
-          <select value={form.result ?? ''} onChange={(e) => set('result', e.target.value || undefined)} className={`${inputCls} bg-zinc-800`}>
-            <option value="">—</option>
-            <option value="W">W</option>
-            <option value="L">L</option>
-            <option value="T">T</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Us</label>
-          <input type="number" min={0} value={form.myScore ?? ''} onChange={(e) => set('myScore', e.target.value ? Number(e.target.value) : undefined)} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Them</label>
-          <input type="number" min={0} value={form.opponentScore ?? ''} onChange={(e) => set('opponentScore', e.target.value ? Number(e.target.value) : undefined)} className={inputCls} />
-        </div>
+        <Select label="Result" onChange={(e) => set('result', e.target.value || undefined)} value={form.result ?? ''}>
+          <option value="">—</option>
+          <option value="W">W</option>
+          <option value="L">L</option>
+          <option value="T">T</option>
+        </Select>
+        <Input label="Us" min={0} onChange={(e) => set('myScore', e.target.value ? Number(e.target.value) : undefined)} type="number" value={form.myScore ?? ''} />
+        <Input label="Them" min={0} onChange={(e) => set('opponentScore', e.target.value ? Number(e.target.value) : undefined)} type="number" value={form.opponentScore ?? ''} />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-1">Notes</label>
-        <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} className={`${inputCls} resize-none`} />
-      </div>
+      <Textarea label="Notes" onChange={(e) => set('notes', e.target.value)} value={form.notes} />
       <div className="flex gap-2 pt-1">
-        <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" className="flex-1">Save Game</Button>
+        <Button className="flex-1" onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+        <Button className="flex-1" type="submit">Save Game</Button>
       </div>
     </form>
   );
 }
 
 function WebCalImport({
-  seasonId,
   myTeam,
-  onImport,
   onBack,
+  onImport,
+  seasonId,
 }: {
-  seasonId: string;
   myTeam: string;
-  onImport: (games: Omit<Game, 'id'>[]) => void;
   onBack: () => void;
+  onImport: (games: Omit<Game, 'id'>[]) => void;
+  seasonId: string;
 }) {
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -152,63 +130,59 @@ function WebCalImport({
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+      <button className="flex items-center gap-1.5 text-sm text-soft hover:text-mid transition-colors" onClick={onBack}>
         <ArrowLeft size={14} /> Back
       </button>
 
       <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-1">WebCal or HTTPS URL</label>
+        <label className="block text-xs font-medium text-soft mb-1">WebCal or HTTPS URL</label>
         <div className="flex gap-2">
           <input
-            value={url}
+            className="flex-1 bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-green-500/50"
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="webcal:// or https://..."
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-green-500/50"
             onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
+            placeholder="webcal:// or https://..."
+            value={url}
           />
-          <Button size="sm" onClick={handleFetch} disabled={status === 'loading' || !url.trim()}>
-            {status === 'loading' ? <CircleNotch size={15} className="animate-spin" /> : 'Import'}
+          <Button disabled={status === 'loading' || !url.trim()} onClick={handleFetch} size="sm">
+            {status === 'loading' ? <CircleNotch className="animate-spin" size={15} /> : 'Import'}
           </Button>
         </div>
-        <p className="text-xs text-zinc-500 mt-1">Paste the webcal link from your league's schedule page.</p>
+        <p className="text-xs text-soft mt-1">Paste the webcal link from your league's schedule page.</p>
       </div>
 
       {error && (
         <div className="flex gap-2 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-xs text-red-400">
-          <WarningCircle size={14} className="shrink-0 mt-0.5" />
+          <WarningCircle className="shrink-0 mt-0.5" size={14} />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="relative flex items-center gap-2">
-        <div className="flex-1 border-t border-zinc-800" />
-        <span className="text-xs text-zinc-500 px-1">or</span>
-        <div className="flex-1 border-t border-zinc-800" />
-      </div>
+      <Divider label="or" />
 
       <div>
-        <input ref={icsFileRef} type="file" accept=".ics" className="hidden" onChange={handleICSFile} />
-        <Button variant="secondary" className="w-full" onClick={() => icsFileRef.current?.click()}>
+        <input accept=".ics" className="hidden" onChange={handleICSFile} ref={icsFileRef} type="file" />
+        <Button className="w-full" onClick={() => icsFileRef.current?.click()} variant="secondary">
           <UploadSimple size={15} /> Import .ics file
         </Button>
-        <p className="text-xs text-zinc-500 mt-1 text-center">Download the .ics from your league site, then import it here.</p>
+        <p className="mt-1 text-center text-xs text-soft">Download the .ics from your league site, then import it here.</p>
       </div>
     </div>
   );
 }
 
 function AddGameModal({
-  seasonId,
   myTeam,
   onAddGame,
   onAddGames,
   onClose,
+  seasonId,
 }: {
-  seasonId: string;
   myTeam: string;
   onAddGame: (data: Omit<Game, 'id'>) => void;
   onAddGames: (games: Omit<Game, 'id'>[]) => void;
   onClose: () => void;
+  seasonId: string;
 }) {
   const [view, setView] = useState<'main' | 'webcal'>('main');
   const csvRef = useRef<HTMLInputElement>(null);
@@ -228,40 +202,36 @@ function AddGameModal({
 
   if (view === 'webcal') {
     return (
-      <Modal title="Import WebCal / .ics" onClose={onClose}>
+      <Modal onClose={onClose} title="Import WebCal / .ics">
         <WebCalImport
-          seasonId={seasonId}
           myTeam={myTeam}
-          onImport={(games) => { onAddGames(games); onClose(); }}
           onBack={() => setView('main')}
+          onImport={(games) => { onAddGames(games); onClose(); }}
+          seasonId={seasonId}
         />
       </Modal>
     );
   }
 
   return (
-    <Modal title="Add Game" onClose={onClose}>
+    <Modal onClose={onClose} title="Add Game">
       <div className="space-y-4">
         <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={() => setView('webcal')}>
+          <Button className="flex-1" onClick={() => setView('webcal')} variant="secondary">
             <LinkIcon size={15} /> WebCal / .ics
           </Button>
-          <Button variant="secondary" className="flex-1" onClick={() => csvRef.current?.click()}>
+          <Button className="flex-1" onClick={() => csvRef.current?.click()} variant="secondary">
             <UploadSimple size={15} /> CSV
           </Button>
         </div>
-        <input ref={csvRef} type="file" accept=".csv" className="hidden" onChange={handleCSV} />
+        <input accept=".csv" className="hidden" onChange={handleCSV} ref={csvRef} type="file" />
 
-        <div className="relative flex items-center gap-2">
-          <div className="flex-1 border-t border-zinc-800" />
-          <span className="text-xs text-zinc-500 px-1">or add manually</span>
-          <div className="flex-1 border-t border-zinc-800" />
-        </div>
+        <Divider label="or add manually" />
 
         <GameForm
-          seasonId={seasonId}
-          onSubmit={(data) => { onAddGame(data); onClose(); }}
           onCancel={onClose}
+          onSubmit={(data) => { onAddGame(data); onClose(); }}
+          seasonId={seasonId}
         />
       </div>
     </Modal>
@@ -285,8 +255,8 @@ export function SchedulePage() {
   const { id: seasonId } = useParams<{ id: string }>();
   const { games, seasons, addGame, addGames, updateGame, deleteGame } = useStore();
   const { user } = useAuthStore();
-  const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const season = seasons.find((s) => s.id === seasonId);
   const seasonGames = games
@@ -296,36 +266,35 @@ export function SchedulePage() {
   if (!seasonId) {
     return (
       <EmptyState
+        description="Go to Seasons and create or select a season first."
         icon={<CalendarDots size={48} />}
         title="Season not found"
-        description="Go to Seasons and create or select a season first."
       />
     );
   }
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-lg font-bold text-zinc-100">Schedule</h1>
-        <Button size="sm" onClick={() => setShowAdd(true)}>
-          <Plus size={15} /> Add Game
-        </Button>
-      </div>
+      <PageHeader
+        action={<Button onClick={() => setShowAdd(true)} size="sm"><Plus size={15} /> Add Game</Button>}
+        className="mb-1 pt-2"
+        title="Schedule"
+      />
 
       {seasonGames.length === 0 ? (
         <EmptyState
+          action={<Button onClick={() => setShowAdd(true)} size="sm"><Plus size={15} /> Add Game</Button>}
+          description="Import a WebCal feed, upload a CSV or .ics file, or add games manually."
           icon={<CalendarDots size={48} />}
           title="No games yet"
-          description="Import a WebCal feed, upload a CSV or .ics file, or add games manually."
-          action={<Button size="sm" onClick={() => setShowAdd(true)}><Plus size={15} /> Add Game</Button>}
         />
       ) : (
         <div className="space-y-2">
           {seasonGames.map((g) => (
-            <div key={g.id} className="bg-zinc-900 rounded-xl border border-zinc-800 p-3 flex items-start gap-3">
+            <div className="bg-panel rounded-xl border border-subtle p-3 flex items-start gap-3" key={g.id}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-zinc-100 text-sm">
+                  <span className="font-semibold text-strong text-sm">
                     {g.isHome ? 'vs' : '@'} {g.opponent}
                   </span>
                   {g.result && (
@@ -334,7 +303,7 @@ export function SchedulePage() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                <div className="flex items-center gap-3 mt-1 text-xs text-soft">
                   <span className="flex items-center gap-1">
                     <CalendarDots size={11} /> {formatDate(g.date)}{g.time ? ` · ${formatTime(g.time)}` : ''}
                   </span>
@@ -346,12 +315,8 @@ export function SchedulePage() {
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
-                <button onClick={() => setEditing(g)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-600 hover:text-zinc-300">
-                  <PencilSimple size={15} />
-                </button>
-                <button onClick={() => deleteGame(g.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400">
-                  <Trash size={15} />
-                </button>
+                <IconButton onClick={() => setEditing(g)}><PencilSimple size={15} /></IconButton>
+                <IconButton onClick={() => deleteGame(g.id)} variant="danger"><Trash size={15} /></IconButton>
               </div>
             </div>
           ))}
@@ -360,20 +325,20 @@ export function SchedulePage() {
 
       {showAdd && (
         <AddGameModal
-          seasonId={seasonId}
           myTeam={season?.teamName ?? ''}
           onAddGame={(data) => { if (user) addGame(data, user.id); }}
           onAddGames={(gs) => { if (user) addGames(gs, user.id); }}
           onClose={() => setShowAdd(false)}
+          seasonId={seasonId}
         />
       )}
       {editing && (
-        <Modal title="Edit Game" onClose={() => setEditing(null)}>
+        <Modal onClose={() => setEditing(null)} title="Edit Game">
           <GameForm
             initial={editing}
-            seasonId={seasonId}
-            onSubmit={(data) => { updateGame(editing.id, data); setEditing(null); }}
             onCancel={() => setEditing(null)}
+            onSubmit={(data) => { updateGame(editing.id, data); setEditing(null); }}
+            seasonId={seasonId}
           />
         </Modal>
       )}

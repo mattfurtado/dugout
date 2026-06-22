@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Baseball } from '@phosphor-icons/react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/Button';
+import { Divider } from '../components/ui/Divider';
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -32,18 +33,18 @@ export default function AuthPage() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-page flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Baseball size={32} weight="fill" className="text-green-500" />
-          <span className="text-xl font-bold text-zinc-100 tracking-tight">Dugout</span>
+          <span className="text-xl font-bold text-strong tracking-tight">Dugout</span>
         </div>
 
         {signUpSuccess ? (
           <div className="text-center space-y-4">
-            <p className="text-zinc-200 font-medium">Check your email</p>
-            <p className="text-zinc-400 text-sm">
-              We sent a confirmation link to <span className="text-zinc-200">{email}</span>.
+            <p className="text-mid font-medium">Check your email</p>
+            <p className="text-soft text-sm">
+              We sent a confirmation link to <span className="text-mid">{email}</span>.
               Click it to activate your account, then sign in.
             </p>
             <button
@@ -55,7 +56,7 @@ export default function AuthPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h1 className="text-lg font-semibold text-zinc-100 text-center mb-6">
+            <h1 className="text-lg font-semibold text-strong text-center mb-6">
               {isSignUp ? 'Create your account' : 'Sign in to Dugout'}
             </h1>
 
@@ -72,7 +73,7 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 text-sm"
+                className="w-full bg-well border border-firm rounded-lg px-3 py-2.5 text-strong placeholder-soft focus:outline-none focus:border-green-500/50 text-sm"
               />
               <input
                 type="password"
@@ -81,7 +82,7 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 text-sm"
+                className="w-full bg-well border border-firm rounded-lg px-3 py-2.5 text-strong placeholder-soft focus:outline-none focus:border-green-500/50 text-sm"
               />
             </div>
 
@@ -89,16 +90,12 @@ export default function AuthPage() {
               {submitting ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}
             </Button>
 
-            <div className="relative flex items-center gap-2">
-              <div className="flex-1 border-t border-zinc-800" />
-              <span className="text-xs text-zinc-600 px-1">or</span>
-              <div className="flex-1 border-t border-zinc-800" />
-            </div>
+            <Divider label="or" />
 
             <button
               type="button"
               onClick={signInWithGoogle}
-              className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-700 hover:border-zinc-600 hover:bg-zinc-800 text-zinc-200 text-sm font-medium rounded-lg px-4 py-2.5 transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-panel border border-firm hover:border-firm hover:bg-well text-strong text-sm font-medium rounded-lg px-4 py-2.5 transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
                 <path d="M47.532 24.552c0-1.636-.132-3.2-.388-4.688H24v9.024h13.204c-.576 3.036-2.292 5.608-4.868 7.332v6.084h7.876c4.612-4.248 7.32-10.512 7.32-17.752z" fill="#4285F4"/>
@@ -109,7 +106,7 @@ export default function AuthPage() {
               Continue with Google
             </button>
 
-            <p className="text-center text-sm text-zinc-500">
+            <p className="text-center text-sm text-soft">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"

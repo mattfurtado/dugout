@@ -10,7 +10,7 @@ export function LineupLayout() {
 
   return (
     <div>
-      <div className="border-b border-zinc-800 px-4">
+      <div className="border-b border-subtle px-4">
         <nav className="flex">
           {LINEUP_TABS.map(({ path, label }) => (
             <NavLink
@@ -19,8 +19,8 @@ export function LineupLayout() {
               className={({ isActive }) =>
                 `px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'text-zinc-100 border-green-500'
-                    : 'text-zinc-500 hover:text-zinc-300 border-transparent'
+                    ? 'text-strong border-green-500'
+                    : 'text-soft hover:text-mid border-transparent'
                 }`
               }
             >

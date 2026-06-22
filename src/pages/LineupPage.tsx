@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, X, WarningCircle, CheckCircle, DotsSixVertical, Users, ChartBar, ArrowUp, ArrowDown } from '@phosphor-icons/react';
+import { ArrowDown, ArrowUp, ChartBar, CheckCircle, DotsSixVertical, Plus, Users, WarningCircle, X } from '@phosphor-icons/react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
   KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -10,10 +10,11 @@ import {
   verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useStore } from '../store';
 import { useAuthStore } from '../store/authStore';
-import { Modal } from '../components/ui/Modal';
+import { useStore } from '../store';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Modal } from '../components/ui/Modal';
+import { Spinner } from '../components/ui/Spinner';
 import type { LineupPosition, LineupRankings, Player } from '../types';
 
 const OUTFIELD: LineupPosition[] = ['LF', 'CF', 'RF'];
@@ -80,31 +81,31 @@ function SortablePlayerRow({
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
       className="flex items-center gap-2 group cursor-grab active:cursor-grabbing touch-none"
     >
-      <DotsSixVertical size={14} className="text-zinc-500 shrink-0" />
-      <span className="text-xs text-zinc-500 w-6 shrink-0">{RANK_LABEL(rank)}</span>
-      <span className="flex-1 text-sm text-zinc-200 truncate">
+      <DotsSixVertical size={14} className="text-soft shrink-0" />
+      <span className="text-xs text-soft w-6 shrink-0">{RANK_LABEL(rank)}</span>
+      <span className="flex-1 text-sm text-strong truncate">
         {player.firstName} {player.lastName}
-        {player.number != null && <span className="text-zinc-500 text-xs ml-1.5">#{player.number}</span>}
+        {player.number != null && <span className="text-soft text-xs ml-1.5">#{player.number}</span>}
       </span>
       <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-all shrink-0">
         <button
           title="Move up"
           onPointerDown={stopProp(onMoveUp)}
-          className={`p-0.5 rounded hover:text-zinc-200 transition-colors ${isFirst ? 'invisible' : 'text-zinc-500'}`}
+          className={`p-0.5 rounded hover:text-mid transition-colors ${isFirst ? 'invisible' : 'text-soft'}`}
         >
           <ArrowUp size={13} />
         </button>
         <button
           title="Move down"
           onPointerDown={stopProp(onMoveDown)}
-          className={`p-0.5 rounded hover:text-zinc-200 transition-colors ${isLast ? 'invisible' : 'text-zinc-500'}`}
+          className={`p-0.5 rounded hover:text-mid transition-colors ${isLast ? 'invisible' : 'text-soft'}`}
         >
           <ArrowDown size={13} />
         </button>
         <button
           title="Remove"
           onPointerDown={stopProp(onRemove)}
-          className="p-0.5 rounded text-zinc-500 hover:text-red-400 transition-colors"
+          className="p-0.5 rounded text-soft hover:text-red-400 transition-colors"
         >
           <X size={13} />
         </button>
@@ -140,9 +141,9 @@ function PositionList({
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-2 sm:px-4 py-3">
+    <div className="bg-panel border border-subtle rounded-xl px-2 sm:px-4 py-3">
       <div className="flex items-start gap-2 sm:gap-4">
-        <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{position}</span>
+        <span className="text-xs font-bold text-soft w-6 pt-0.5 shrink-0 text-right">{position}</span>
         <div className="flex-1 space-y-2 min-w-0">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={ranked.map((p) => p.id)} strategy={verticalListSortingStrategy}>
@@ -163,7 +164,7 @@ function PositionList({
           {ranked.length < 5 && (
             <button
               onClick={() => onAdd(position)}
-              className="flex items-center gap-1 text-xs text-zinc-600 hover:text-green-400 transition-colors"
+              className="flex items-center gap-1 text-xs text-ghost hover:text-green-400 transition-colors"
             >
               <Plus size={12} />
               {ranked.length === 0 ? 'Add player' : 'Add another'}
@@ -212,7 +213,7 @@ function PlayerPicker({
   return (
     <Modal title={`Add to ${position}`} onClose={onClose}>
       {available.length === 0 ? (
-        <p className="text-zinc-500 text-sm text-center py-4">All players already assigned to this position.</p>
+        <p className="text-soft text-sm text-center py-4">All players already assigned to this position.</p>
       ) : (
         <>
           <input
@@ -221,11 +222,11 @@ function PlayerPicker({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 mb-3"
+            className="w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:border-green-500/50 mb-3"
           />
           <div className="space-y-0.5 max-h-64 overflow-y-auto -mx-1 mb-3">
             {sorted.length === 0 && (
-              <p className="text-zinc-500 text-sm text-center py-4">No players match "{query}"</p>
+              <p className="text-soft text-sm text-center py-4">No players match "{query}"</p>
             )}
             {sorted.map((player) => {
               const count = counts[player.id] ?? 0;
@@ -236,11 +237,11 @@ function PlayerPicker({
                   key={player.id}
                   onClick={() => toggle(player.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                    isSelected ? 'bg-green-500/10 border border-green-500/20' : 'hover:bg-zinc-800 border border-transparent'
+                    isSelected ? 'bg-green-500/10 border border-green-500/20' : 'hover:bg-well border border-transparent'
                   }`}
                 >
                   <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                    isSelected ? 'bg-green-500 border-green-500' : 'border-zinc-600'
+                    isSelected ? 'bg-green-500 border-green-500' : 'border-firm'
                   }`}>
                     {isSelected && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -252,8 +253,8 @@ function PlayerPicker({
                     {player.number != null ? player.number : (player.firstName[0] + player.lastName[0]).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-zinc-200">{player.firstName} {player.lastName}</div>
-                    <div className="text-xs text-zinc-600">
+                    <div className="text-sm text-strong">{player.firstName} {player.lastName}</div>
+                    <div className="text-xs text-ghost">
                       {count === 0 ? 'No positions assigned yet' : `${count} position${count !== 1 ? 's' : ''} assigned`}
                     </div>
                   </div>
@@ -302,11 +303,7 @@ function computeAggregate(allRankings: LineupRankings[]): Record<string, Aggrega
   return result;
 }
 
-function AggregateView({
-  seasonId, roster,
-}: {
-  seasonId: string; roster: Player[];
-}) {
+function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[] }) {
   const { coachRankings, loadCoachRankings } = useStore();
   const [loading, setLoading] = useState(false);
 
@@ -322,7 +319,7 @@ function AggregateView({
   if (loading) {
     return (
       <div className="flex justify-center pt-12">
-        <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }
@@ -330,9 +327,9 @@ function AggregateView({
   if (numCoaches < 2) {
     return (
       <div className="pt-8 text-center">
-        <ChartBar size={40} className="text-zinc-700 mx-auto mb-3" />
-        <p className="text-sm text-zinc-500">Not enough rankings yet.</p>
-        <p className="text-xs text-zinc-600 mt-1">At least 2 coaches need to submit rankings to see the aggregate.</p>
+        <ChartBar size={40} className="text-ghost mx-auto mb-3" />
+        <p className="text-sm text-soft">Not enough rankings yet.</p>
+        <p className="text-xs text-ghost mt-1">At least 2 coaches need to submit rankings to see the aggregate.</p>
       </div>
     );
   }
@@ -342,23 +339,23 @@ function AggregateView({
 
   return (
     <div className="space-y-6">
-      <p className="text-xs text-zinc-500">
-        Based on rankings from <span className="text-zinc-300 font-medium">{numCoaches} coach{numCoaches !== 1 ? 'es' : ''}</span> · Borda count
+      <p className="text-xs text-soft">
+        Based on rankings from <span className="text-mid font-medium">{numCoaches} coach{numCoaches !== 1 ? 'es' : ''}</span> · Borda count
       </p>
       {POSITION_GROUPS.map((group) => {
         const hasAny = group.positions.some((pos) => aggregate[pos]?.length);
         if (!hasAny) return null;
         return (
           <div key={group.label}>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
+            <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">{group.label}</h2>
             <div className="space-y-2">
               {group.positions.map((pos) => {
                 const entries = aggregate[pos];
                 if (!entries?.length) return null;
                 return (
-                  <div key={pos} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+                  <div key={pos} className="bg-panel border border-subtle rounded-xl px-4 py-3">
                     <div className="flex items-start gap-4">
-                      <span className="text-xs font-bold text-zinc-500 w-6 pt-0.5 shrink-0 text-right">{pos}</span>
+                      <span className="text-xs font-bold text-soft w-6 pt-0.5 shrink-0 text-right">{pos}</span>
                       <div className="flex-1 space-y-2">
                         {entries.slice(0, 3).map((entry, i) => {
                           const player = playerById[entry.playerId];
@@ -366,13 +363,13 @@ function AggregateView({
                           const pct = Math.round((entry.coachCount / numCoaches) * 100);
                           return (
                             <div key={entry.playerId} className="flex items-center gap-2">
-                              <span className="text-xs text-zinc-600 w-6 shrink-0">{RANK_LABEL(i)}</span>
-                              <span className="flex-1 text-sm text-zinc-200 truncate">
+                              <span className="text-xs text-ghost w-6 shrink-0">{RANK_LABEL(i)}</span>
+                              <span className="flex-1 text-sm text-strong truncate">
                                 {player.firstName} {player.lastName}
-                                {player.number != null && <span className="text-zinc-600 text-xs ml-1.5">#{player.number}</span>}
+                                {player.number != null && <span className="text-ghost text-xs ml-1.5">#{player.number}</span>}
                               </span>
                               <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
-                                pct === 100 ? 'bg-green-500/15 text-green-400' : 'bg-zinc-800 text-zinc-500'
+                                pct === 100 ? 'bg-green-500/15 text-green-400' : 'bg-well text-soft'
                               }`}>
                                 {entry.coachCount}/{numCoaches}
                               </span>
@@ -481,24 +478,24 @@ export function LineupPage() {
     <div className="p-4 max-w-3xl mx-auto">
       <div className="mb-5 pt-2">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold text-zinc-100">Lineup Ranker</h1>
+          <h1 className="text-lg font-bold text-strong">Lineup Ranker</h1>
           {tab === 'my' && (
-            <span className="text-xs text-zinc-600">
+            <span className="text-xs text-ghost">
               {saveStatus === 'saving' && 'Saving…'}
               {saveStatus === 'saved' && '✓ Saved'}
             </span>
           )}
         </div>
-        <div className="flex sm:inline-flex bg-zinc-800 rounded-lg p-0.5">
+        <div className="flex sm:inline-flex bg-well rounded-lg p-0.5">
           <button
             onClick={() => setTab('my')}
-            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'my' ? 'bg-wash text-strong' : 'text-soft hover:text-mid'}`}
           >
             My Rankings
           </button>
           <button
             onClick={() => setTab('aggregate')}
-            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'aggregate' ? 'bg-wash text-strong' : 'text-soft hover:text-mid'}`}
           >
             Coach Rankings
           </button>
@@ -512,7 +509,7 @@ export function LineupPage() {
           <div className="space-y-6">
             {POSITION_GROUPS.map((group) => (
               <div key={group.label}>
-                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">{group.label}</h2>
+                <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">{group.label}</h2>
                 <div className="space-y-2">
                   {group.positions.map((position) => {
                     const ranked = (local[position] ?? [])
@@ -537,7 +534,7 @@ export function LineupPage() {
               <div>
                 {warnings.length > 0 ? (
                   <div className="space-y-1.5">
-                    <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-2">Warnings</h2>
+                    <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Warnings</h2>
                     {warnings.map((w, i) => (
                       <div key={i} className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
                         <WarningCircle size={13} className="shrink-0 mt-0.5" />

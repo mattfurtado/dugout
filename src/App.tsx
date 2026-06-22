@@ -4,11 +4,12 @@ import { Layout } from './components/layout/Layout';
 import RequireAuth from './components/auth/RequireAuth';
 import { useAuthStore } from './store/authStore';
 import { useStore } from './store';
+import { Spinner } from './components/ui/Spinner';
 import { SeasonsPage } from './pages/SeasonsPage';
 import { SeasonDetailPage } from './pages/SeasonDetailPage';
 import { SeasonOverviewPage } from './pages/SeasonOverviewPage';
 import { SchedulePage } from './pages/SchedulePage';
-import { RosterPage } from './pages/RosterPage';
+import { TeamPage } from './pages/TeamPage';
 import { LineupLayout } from './pages/LineupLayout';
 import { LineupPage } from './pages/LineupPage';
 import AuthPage from './pages/AuthPage';
@@ -29,11 +30,10 @@ function DataLoader({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
-  // Don't block the invite page — it handles its own loading state
   if (user && !initialized && !pathname.startsWith('/invite')) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-700 border-t-green-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <Spinner />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function App() {
             <Route path="seasons/:id" element={<SeasonDetailPage />}>
               <Route index element={<SeasonOverviewPage />} />
               <Route path="schedule" element={<SchedulePage />} />
-              <Route path="roster" element={<RosterPage />} />
+              <Route path="team" element={<TeamPage />} />
               <Route path="lineup" element={<LineupLayout />}>
                 <Route index element={<Navigate to="ranker" replace />} />
                 <Route path="ranker" element={<LineupPage />} />

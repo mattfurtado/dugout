@@ -1,27 +1,28 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, Trash, Users, PencilSimple, Phone, Envelope, Link, Check } from '@phosphor-icons/react';
-import { useStore } from '../store';
+import { Check, Envelope, Link, PencilSimple, Phone, Plus, Trash, Users } from '@phosphor-icons/react';
 import { useAuthStore } from '../store/authStore';
-import { Modal } from '../components/ui/Modal';
+import { useStore } from '../store';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
-import type { Player, Position, Coach, CoachRole } from '../types';
+import { IconButton } from '../components/ui/IconButton';
+import { Input, Select } from '../components/ui/Input';
+import { Modal } from '../components/ui/Modal';
+import { PageHeader } from '../components/ui/PageHeader';
+import type { Coach, CoachRole, Player, Position } from '../types';
 
 const ALL_POSITIONS: Position[] = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH', 'Bench'];
 const ALL_ROLES: CoachRole[] = ['Head Coach', 'Assistant Coach'];
 
-const inputCls = 'w-full bg-well border border-firm rounded-lg px-3 py-2 text-sm text-strong placeholder-soft focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50';
-
 // ── Coach Form ────────────────────────────────────────────────────────────────
 
 function CoachForm({
-  initial, seasonId, onSubmit, onCancel,
+  initial, onCancel, onSubmit, seasonId,
 }: {
   initial?: Partial<Coach>;
-  seasonId: string;
-  onSubmit: (data: Omit<Coach, 'id'>) => void;
   onCancel: () => void;
+  onSubmit: (data: Omit<Coach, 'id'>) => void;
+  seasonId: string;
 }) {
   const [form, setForm] = useState<Omit<Coach, 'id'>>({
     seasonId,
@@ -33,28 +34,16 @@ function CoachForm({
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-3">
-      <div>
-        <label className="block text-xs font-medium text-soft mb-1">Name</label>
-        <input required value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Full name" className={inputCls} />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-soft mb-1">Role</label>
-        <select value={form.role} onChange={(e) => set('role', e.target.value)} className={`${inputCls} bg-well`}>
-          {ALL_ROLES.map((r) => <option key={r}>{r}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-soft mb-1">Phone</label>
-        <input type="tel" value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} placeholder="Optional" className={inputCls} />
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-soft mb-1">Email</label>
-        <input type="email" value={form.email ?? ''} onChange={(e) => set('email', e.target.value)} placeholder="Optional" className={inputCls} />
-      </div>
+    <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
+      <Input label="Name" onChange={(e) => set('name', e.target.value)} placeholder="Full name" required value={form.name} />
+      <Select label="Role" onChange={(e) => set('role', e.target.value)} value={form.role}>
+        {ALL_ROLES.map((r) => <option key={r}>{r}</option>)}
+      </Select>
+      <Input label="Phone" onChange={(e) => set('phone', e.target.value)} placeholder="Optional" type="tel" value={form.phone ?? ''} />
+      <Input label="Email" onChange={(e) => set('email', e.target.value)} placeholder="Optional" type="email" value={form.email ?? ''} />
       <div className="flex gap-2 pt-1">
-        <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" className="flex-1">Save</Button>
+        <Button className="flex-1" onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+        <Button className="flex-1" type="submit">Save</Button>
       </div>
     </form>
   );
@@ -63,12 +52,12 @@ function CoachForm({
 // ── Player Form ───────────────────────────────────────────────────────────────
 
 function PlayerForm({
-  initial, seasonId, onSubmit, onCancel,
+  initial, onCancel, onSubmit, seasonId,
 }: {
   initial?: Partial<Player>;
-  seasonId: string;
-  onSubmit: (data: Omit<Player, 'id'>) => void;
   onCancel: () => void;
+  onSubmit: (data: Omit<Player, 'id'>) => void;
+  seasonId: string;
 }) {
   const [form, setForm] = useState<Omit<Player, 'id'>>({
     seasonId,
@@ -92,26 +81,20 @@ function PlayerForm({
     }));
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-3">
+    <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }}>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-soft mb-1">First Name</label>
-          <input required value={form.firstName} onChange={(e) => set('firstName', e.target.value)} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-soft mb-1">Last Name</label>
-          <input required value={form.lastName} onChange={(e) => set('lastName', e.target.value)} className={inputCls} />
-        </div>
+        <Input label="First Name" onChange={(e) => set('firstName', e.target.value)} required value={form.firstName} />
+        <Input label="Last Name" onChange={(e) => set('lastName', e.target.value)} required value={form.lastName} />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-soft mb-1">Jersey #</label>
-        <input type="number" min={0} max={99} value={form.number ?? ''} onChange={(e) => set('number', e.target.value ? Number(e.target.value) : undefined)} className={inputCls} />
-      </div>
+      <Input label="Jersey #" max={99} min={0} onChange={(e) => set('number', e.target.value ? Number(e.target.value) : undefined)} type="number" value={form.number ?? ''} />
       <div>
         <label className="block text-xs font-medium text-soft mb-2">Positions</label>
         <div className="flex flex-wrap gap-1.5">
           {ALL_POSITIONS.map((pos) => (
-            <button key={pos} type="button" onClick={() => togglePos(pos)}
+            <button
+              key={pos}
+              onClick={() => togglePos(pos)}
+              type="button"
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                 form.positions.includes(pos)
                   ? 'bg-green-500 text-white'
@@ -124,16 +107,16 @@ function PlayerForm({
         </div>
       </div>
       <div className="border-t border-subtle pt-3">
-        <p className="text-xs font-medium text-ghost mb-2 uppercase tracking-wide">Parent / Guardian</p>
+        <p className="mb-2 text-xs font-medium text-ghost uppercase tracking-wide">Parent / Guardian</p>
         <div className="space-y-2">
-          <input value={form.parentName} onChange={(e) => set('parentName', e.target.value)} placeholder="Name" className={inputCls} />
-          <input type="tel" value={form.parentPhone} onChange={(e) => set('parentPhone', e.target.value)} placeholder="Phone" className={inputCls} />
-          <input type="email" value={form.parentEmail} onChange={(e) => set('parentEmail', e.target.value)} placeholder="Email" className={inputCls} />
+          <Input onChange={(e) => set('parentName', e.target.value)} placeholder="Name" value={form.parentName} />
+          <Input onChange={(e) => set('parentPhone', e.target.value)} placeholder="Phone" type="tel" value={form.parentPhone} />
+          <Input onChange={(e) => set('parentEmail', e.target.value)} placeholder="Email" type="email" value={form.parentEmail} />
         </div>
       </div>
       <div className="flex gap-2 pt-1">
-        <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" className="flex-1">Save Player</Button>
+        <Button className="flex-1" onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+        <Button className="flex-1" type="submit">Save Player</Button>
       </div>
     </form>
   );
@@ -141,15 +124,15 @@ function PlayerForm({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export function RosterPage() {
+export function TeamPage() {
   const { id: seasonId } = useParams<{ id: string }>();
   const { players, coaches, addPlayer, updatePlayer, deletePlayer, addCoach, updateCoach, deleteCoach, createInvite } = useStore();
   const { user } = useAuthStore();
 
-  const [showPlayerForm, setShowPlayerForm] = useState(false);
+  const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showCoachForm, setShowCoachForm] = useState(false);
-  const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
+  const [showPlayerForm, setShowPlayerForm] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopyInvite = async () => {
@@ -185,7 +168,7 @@ export function RosterPage() {
   const canManageRoles = isOwner || isHeadCoach;
 
   if (!seasonId) {
-    return <EmptyState icon={<Users size={48} />} title="Season not found" description="Return to seasons and try again." />;
+    return <EmptyState description="Return to seasons and try again." icon={<Users size={48} />} title="Season not found" />;
   }
 
   return (
@@ -193,12 +176,8 @@ export function RosterPage() {
 
       {/* Coaches */}
       <div>
-        <div className="flex items-center justify-between mb-3 pt-2">
-          <div>
-            <h2 className="text-base font-bold text-strong">Coaches</h2>
-            <p className="text-xs text-soft">{staff.length} staff member{staff.length !== 1 ? 's' : ''}</p>
-          </div>
-          {isOwner && (
+        <PageHeader
+          action={isOwner && (
             <div className="flex gap-2">
               <button
                 onClick={handleCopyInvite}
@@ -211,12 +190,16 @@ export function RosterPage() {
                 {copied ? <Check size={13} /> : <Link size={13} />}
                 {copied ? 'Copied!' : 'Invite Link'}
               </button>
-              <Button size="sm" onClick={() => setShowCoachForm(true)}>
+              <Button onClick={() => setShowCoachForm(true)} size="sm">
                 <Plus size={15} /> Add Coach
               </Button>
             </div>
           )}
-        </div>
+          className="mb-3 pt-2"
+          size="md"
+          subtitle={`${staff.length} staff member${staff.length !== 1 ? 's' : ''}`}
+          title="Coaches"
+        />
 
         {staff.length === 0 ? (
           <div className="bg-panel border border-subtle border-dashed rounded-xl p-6 text-center">
@@ -225,7 +208,7 @@ export function RosterPage() {
         ) : (
           <div className="space-y-2">
             {staff.map((c) => (
-              <div key={c.id} className="bg-panel rounded-xl border border-subtle p-3 flex items-center gap-3">
+              <div className="bg-panel rounded-xl border border-subtle p-3 flex items-center gap-3" key={c.id}>
                 <div className="w-10 h-10 rounded-full bg-well border border-firm flex items-center justify-center font-bold text-sm text-soft shrink-0">
                   {c.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
@@ -234,12 +217,12 @@ export function RosterPage() {
                   <div className="flex items-center gap-3 mt-0.5">
                     <span className="text-xs text-soft">{c.role}</span>
                     {c.phone && (
-                      <a href={`tel:${c.phone}`} className="text-xs text-ghost flex items-center gap-1 hover:text-green-400">
+                      <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`tel:${c.phone}`}>
                         <Phone size={11} /> {c.phone}
                       </a>
                     )}
                     {c.email && (
-                      <a href={`mailto:${c.email}`} className="text-xs text-ghost flex items-center gap-1 hover:text-green-400">
+                      <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`mailto:${c.email}`}>
                         <Envelope size={11} /> {c.email}
                       </a>
                     )}
@@ -247,13 +230,9 @@ export function RosterPage() {
                 </div>
                 {canManageRoles && (
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setEditingCoach(c)} className="p-1.5 rounded-lg hover:bg-well text-ghost hover:text-mid">
-                      <PencilSimple size={15} />
-                    </button>
+                    <IconButton onClick={() => setEditingCoach(c)}><PencilSimple size={15} /></IconButton>
                     {isOwner && (
-                      <button onClick={() => deleteCoach(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-ghost hover:text-red-400">
-                        <Trash size={15} />
-                      </button>
+                      <IconButton onClick={() => deleteCoach(c.id)} variant="danger"><Trash size={15} /></IconButton>
                     )}
                   </div>
                 )}
@@ -265,29 +244,29 @@ export function RosterPage() {
 
       {/* Players */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-base font-bold text-strong">Players</h2>
-            <p className="text-xs text-soft">{roster.length} player{roster.length !== 1 ? 's' : ''}</p>
-          </div>
-          {canManageRoles && (
-            <Button size="sm" onClick={() => setShowPlayerForm(true)}>
+        <PageHeader
+          action={canManageRoles && (
+            <Button onClick={() => setShowPlayerForm(true)} size="sm">
               <Plus size={15} /> Add Player
             </Button>
           )}
-        </div>
+          className="mb-3"
+          size="md"
+          subtitle={`${roster.length} player${roster.length !== 1 ? 's' : ''}`}
+          title="Players"
+        />
 
         {roster.length === 0 ? (
           <EmptyState
+            action={canManageRoles ? <Button onClick={() => setShowPlayerForm(true)}><Plus size={15} /> Add Player</Button> : undefined}
+            description="Add players to build your roster for this season."
             icon={<Users size={48} />}
             title="No players yet"
-            description="Add players to build your roster for this season."
-            action={canManageRoles ? <Button onClick={() => setShowPlayerForm(true)}><Plus size={15} /> Add Player</Button> : undefined}
           />
         ) : (
           <div className="space-y-2">
             {roster.map((p) => (
-              <div key={p.id} className="bg-panel rounded-xl border border-subtle p-3 flex items-start gap-3">
+              <div className="bg-panel rounded-xl border border-subtle p-3 flex items-start gap-3" key={p.id}>
                 <div className="w-10 h-10 rounded-full bg-green-500/15 border border-green-500/20 flex items-center justify-center font-bold text-sm text-green-400 shrink-0">
                   {p.number != null ? `#${p.number}` : (p.firstName[0] + p.lastName[0]).toUpperCase()}
                 </div>
@@ -296,19 +275,19 @@ export function RosterPage() {
                   {p.positions.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {p.positions.map((pos) => (
-                        <span key={pos} className="text-xs bg-well text-soft border border-firm px-1.5 py-0.5 rounded">{pos}</span>
+                        <span className="text-xs bg-well text-soft border border-firm px-1.5 py-0.5 rounded" key={pos}>{pos}</span>
                       ))}
                     </div>
                   )}
                   {(p.parentPhone || p.parentEmail) && (
                     <div className="flex gap-3 mt-1">
                       {p.parentPhone && (
-                        <a href={`tel:${p.parentPhone}`} className="text-xs text-ghost flex items-center gap-1 hover:text-green-400">
+                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`tel:${p.parentPhone}`}>
                           <Phone size={11} /> {p.parentPhone}
                         </a>
                       )}
                       {p.parentEmail && (
-                        <a href={`mailto:${p.parentEmail}`} className="text-xs text-ghost flex items-center gap-1 hover:text-green-400">
+                        <a className="text-xs text-ghost flex items-center gap-1 hover:text-green-400" href={`mailto:${p.parentEmail}`}>
                           <Envelope size={11} /> {p.parentEmail}
                         </a>
                       )}
@@ -317,12 +296,8 @@ export function RosterPage() {
                 </div>
                 {canManageRoles && (
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setEditingPlayer(p)} className="p-1.5 rounded-lg hover:bg-well text-ghost hover:text-mid">
-                      <PencilSimple size={15} />
-                    </button>
-                    <button onClick={() => deletePlayer(p.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-ghost hover:text-red-400">
-                      <Trash size={15} />
-                    </button>
+                    <IconButton onClick={() => setEditingPlayer(p)}><PencilSimple size={15} /></IconButton>
+                    <IconButton onClick={() => deletePlayer(p.id)} variant="danger"><Trash size={15} /></IconButton>
                   </div>
                 )}
               </div>
@@ -333,40 +308,40 @@ export function RosterPage() {
 
       {/* Modals */}
       {showCoachForm && (
-        <Modal title="Add Coach" onClose={() => setShowCoachForm(false)}>
+        <Modal onClose={() => setShowCoachForm(false)} title="Add Coach">
           <CoachForm
-            seasonId={seasonId}
-            onSubmit={(data) => { if (user) addCoach(data, user.id); setShowCoachForm(false); }}
             onCancel={() => setShowCoachForm(false)}
+            onSubmit={(data) => { if (user) addCoach(data, user.id); setShowCoachForm(false); }}
+            seasonId={seasonId}
           />
         </Modal>
       )}
       {editingCoach && (
-        <Modal title="Edit Coach" onClose={() => setEditingCoach(null)}>
+        <Modal onClose={() => setEditingCoach(null)} title="Edit Coach">
           <CoachForm
             initial={editingCoach}
-            seasonId={seasonId}
-            onSubmit={(data) => { updateCoach(editingCoach.id, data); setEditingCoach(null); }}
             onCancel={() => setEditingCoach(null)}
+            onSubmit={(data) => { updateCoach(editingCoach.id, data); setEditingCoach(null); }}
+            seasonId={seasonId}
           />
         </Modal>
       )}
       {showPlayerForm && (
-        <Modal title="Add Player" onClose={() => setShowPlayerForm(false)}>
+        <Modal onClose={() => setShowPlayerForm(false)} title="Add Player">
           <PlayerForm
-            seasonId={seasonId}
-            onSubmit={(data) => { if (user) addPlayer(data, user.id); setShowPlayerForm(false); }}
             onCancel={() => setShowPlayerForm(false)}
+            onSubmit={(data) => { if (user) addPlayer(data, user.id); setShowPlayerForm(false); }}
+            seasonId={seasonId}
           />
         </Modal>
       )}
       {editingPlayer && (
-        <Modal title="Edit Player" onClose={() => setEditingPlayer(null)}>
+        <Modal onClose={() => setEditingPlayer(null)} title="Edit Player">
           <PlayerForm
             initial={editingPlayer}
-            seasonId={seasonId}
-            onSubmit={(data) => { updatePlayer(editingPlayer.id, data); setEditingPlayer(null); }}
             onCancel={() => setEditingPlayer(null)}
+            onSubmit={(data) => { updatePlayer(editingPlayer.id, data); setEditingPlayer(null); }}
+            seasonId={seasonId}
           />
         </Modal>
       )}
