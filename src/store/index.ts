@@ -37,6 +37,9 @@ interface AppState {
   saveLineupRankings: (seasonId: string, rankings: LineupRankings, userId: string) => Promise<void>;
   coachRankings: Record<string, Record<string, LineupRankings>>;
   loadCoachRankings: (seasonId: string) => Promise<void>;
+
+  theme: 'light' | 'dark';
+  saveTheme: (theme: 'light' | 'dark', userId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -48,17 +51,19 @@ export const useStore = create<AppState>((set) => ({
   initialized: false,
   lineupRankings: {},
   coachRankings: {},
+  theme: 'dark',
 
   loadUserData: async (userId) => {
     set({ loading: true });
 
     // Fetch owned data with explicit filter (reliable regardless of RLS session timing)
-    const [s, g, p, c, memberships] = await Promise.all([
+    const [s, g, p, c, memberships, prefs] = await Promise.all([
       supabase.from('seasons').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('games').select('*').eq('user_id', userId),
       supabase.from('players').select('*').eq('user_id', userId),
       supabase.from('coaches').select('*').eq('user_id', userId),
       supabase.from('season_members').select('season_id').eq('user_id', userId),
+      supabase.from('user_preferences').select('theme').eq('user_id', userId).single(),
     ]);
 
     // For seasons the user is invited to, fetch their seasons and players via RLS member policies
@@ -105,7 +110,17 @@ export const useStore = create<AppState>((set) => ({
       ],
       loading: false,
       initialized: true,
+      theme: (prefs.data?.theme as 'light' | 'dark') ?? 'dark',
     });
+
+    const theme = (prefs.data?.theme as 'light' | 'dark') ?? 'dark';
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.remove('light');
+      localStorage.setItem('theme', 'dark');
+    }
   },
 
   clearData: () => set({ seasons: [], games: [], players: [], coaches: [], initialized: false }),
@@ -279,5 +294,13 @@ export const useStore = create<AppState>((set) => ({
     const byCoach: Record<string, LineupRankings> = {};
     for (const row of data ?? []) byCoach[row.user_id] = row.rankings as LineupRankings;
     set((s) => ({ coachRankings: { ...s.coachRankings, [seasonId]: byCoach } }));
+  },
+
+  saveTheme: async (theme, userId) => {
+    set({ theme });
+    await supabase.from('user_preferences').upsert(
+      { user_id: userId, theme },
+      { onConflict: 'user_id' }
+    );
   },
 }));
