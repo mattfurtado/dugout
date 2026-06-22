@@ -164,10 +164,10 @@ function PositionList({
           {ranked.length < 5 && (
             <button
               onClick={() => onAdd(position)}
-              className="flex items-center gap-1 text-xs text-ghost hover:text-green-400 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-green-500/50 hover:text-green-400 rounded-lg px-2.5 py-1 transition-colors"
             >
-              <Plus size={12} />
-              {ranked.length === 0 ? 'Add player' : 'Add another'}
+              <Plus size={11} />
+              Add player
             </button>
           )}
         </div>
