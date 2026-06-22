@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { ArrowDown, ArrowUp, ChartBar, CheckCircle, DotsSixVertical, Plus, Users, WarningCircle, X } from '@phosphor-icons/react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { ArrowDown, ArrowUp, ChartBar, CheckCircle, DotsSixVertical, Plus, Question, Users, WarningCircle, X } from '@phosphor-icons/react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
   KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -303,9 +303,17 @@ function computeAggregate(allRankings: LineupRankings[]): Record<string, Aggrega
   return result;
 }
 
-function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[] }) {
+function AggregateView({ preview, seasonId, roster }: { preview: boolean; seasonId: string; roster: Player[] }) {
   const { coachRankings, loadCoachRankings } = useStore();
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+
+  const toggleExpanded = (pos: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(pos) ? next.delete(pos) : next.add(pos);
+      return next;
+    });
 
   useEffect(() => {
     setLoading(true);
@@ -324,7 +332,7 @@ function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[
     );
   }
 
-  if (numCoaches < 2) {
+  if (numCoaches < 2 && !preview) {
     return (
       <div className="pt-8 text-center">
         <ChartBar size={40} className="text-ghost mx-auto mb-3" />
@@ -357,10 +365,9 @@ function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[
                     <div className="flex items-start gap-4">
                       <span className="text-xs font-bold text-soft w-6 pt-0.5 shrink-0 text-right">{pos}</span>
                       <div className="flex-1 space-y-2">
-                        {entries.slice(0, 3).map((entry, i) => {
+                        {(expanded.has(pos) ? entries : entries.slice(0, 3)).map((entry, i) => {
                           const player = playerById[entry.playerId];
                           if (!player) return null;
-                          const pct = Math.round((entry.coachCount / numCoaches) * 100);
                           return (
                             <div key={entry.playerId} className="flex items-center gap-2">
                               <span className="text-xs text-ghost w-6 shrink-0">{RANK_LABEL(i)}</span>
@@ -368,14 +375,20 @@ function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[
                                 {player.firstName} {player.lastName}
                                 {player.number != null && <span className="text-ghost text-xs ml-1.5">#{player.number}</span>}
                               </span>
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
-                                pct === 100 ? 'bg-green-500/15 text-green-400' : 'bg-well text-soft'
-                              }`}>
-                                {entry.coachCount}/{numCoaches}
+                              <span className="text-xs px-1.5 py-0.5 rounded-full shrink-0 bg-well text-soft">
+                                {entry.score} pt{entry.score !== 1 ? 's' : ''}
                               </span>
                             </div>
                           );
                         })}
+                        {entries.length > 3 && (
+                          <button
+                            className="text-xs text-ghost hover:text-soft transition-colors"
+                            onClick={() => toggleExpanded(pos)}
+                          >
+                            {expanded.has(pos) ? 'Show less' : `Show all ${entries.length}`}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -393,9 +406,12 @@ function AggregateView({ seasonId, roster }: { seasonId: string; roster: Player[
 
 export function LineupPage() {
   const { id: seasonId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const preview = searchParams.get('preview') === 'true';
   const { players, loadLineupRankings, saveLineupRankings } = useStore();
   const { user } = useAuthStore();
 
+  const [showHelp, setShowHelp] = useState(false);
   const [tab, setTab] = useState<'my' | 'aggregate'>('my');
   const [local, setLocal] = useState<LineupRankings>({});
   const [picking, setPicking] = useState<LineupPosition | null>(null);
@@ -478,7 +494,16 @@ export function LineupPage() {
     <div className="p-4 max-w-3xl mx-auto">
       <div className="mb-5 pt-2">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold text-strong">Lineup Ranker</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-strong">Lineup Ranker</h1>
+            <button
+              aria-label="How it works"
+              className="text-ghost hover:text-soft transition-colors"
+              onClick={() => setShowHelp(true)}
+            >
+              <Question size={16} weight="bold" />
+            </button>
+          </div>
           {tab === 'my' && (
             <span className="text-xs text-ghost">
               {saveStatus === 'saving' && 'Saving…'}
@@ -503,7 +528,7 @@ export function LineupPage() {
       </div>
 
       {tab === 'aggregate' ? (
-        <AggregateView seasonId={seasonId!} roster={roster} />
+        <AggregateView preview={preview} roster={roster} seasonId={seasonId!} />
       ) : (
         <>
           <div className="space-y-6">
@@ -562,6 +587,34 @@ export function LineupPage() {
             />
           )}
         </>
+      )}
+
+      {showHelp && (
+        <Modal onClose={() => setShowHelp(false)} title="How it works">
+          <div className="space-y-5 text-sm">
+            <div>
+              <h3 className="font-semibold text-strong mb-2">Assignment requirements</h3>
+              <p className="text-soft leading-relaxed">
+                Each player you rank must appear in at least one <span className="text-mid font-medium">infield position</span> (C, 1B, 2B, 3B, or SS) and at least one <span className="text-mid font-medium">outfield position</span> (LF, CF, or RF). Players missing either will show a warning until the gap is filled.
+              </p>
+            </div>
+            <div className="border-t border-subtle pt-5">
+              <h3 className="font-semibold text-strong mb-2">Coach Rankings (aggregate)</h3>
+              <p className="text-soft leading-relaxed mb-3">
+                The aggregate uses <a className="text-mid font-medium underline hover:text-strong transition-colors" href="https://en.wikipedia.org/wiki/Borda_count" rel="noopener noreferrer" target="_blank">Borda count</a>: for each position, a coach's rankings are converted to points based on how many players they ranked. The 1st-place player gets the most points, 2nd gets one fewer, and so on.
+              </p>
+              <div className="bg-well rounded-lg px-4 py-3 space-y-1 text-xs font-mono text-soft">
+                <div>1st of 4 ranked → <span className="text-mid">4 pts</span></div>
+                <div>2nd of 4 ranked → <span className="text-mid">3 pts</span></div>
+                <div>3rd of 4 ranked → <span className="text-mid">2 pts</span></div>
+                <div>4th of 4 ranked → <span className="text-mid">1 pt</span></div>
+              </div>
+              <p className="text-soft leading-relaxed mt-3">
+                Each player's points are summed across all coaches who ranked them. The top 3 players per position are shown, along with how many coaches included that player.
+              </p>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
