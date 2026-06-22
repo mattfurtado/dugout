@@ -26,6 +26,8 @@ const POSITION_GROUPS: { label: string; positions: LineupPosition[] }[] = [
   { label: 'Outfield', positions: ['LF', 'CF', 'RF'] },
 ];
 
+const MAX_RANKED = 8;
+
 const RANK_LABEL = (i: number) =>
   ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'][i] ?? `${i + 1}th`;
 
@@ -294,7 +296,7 @@ function computeAggregate(allRankings: LineupRankings[]): Record<string, Aggrega
     for (const id of allPlayers) { scores[id] = 0; counts[id] = 0; }
     for (const r of allRankings) {
       const ranked = r[pos] ?? [];
-      ranked.forEach((id, i) => { scores[id] += ranked.length - i; counts[id]++; });
+      ranked.forEach((id, i) => { scores[id] += MAX_RANKED - i; counts[id]++; });
     }
     result[pos] = allPlayers
       .map((id) => ({ playerId: id, score: scores[id], coachCount: counts[id] }))
@@ -604,16 +606,17 @@ export function LineupPage() {
             <div className="border-t border-subtle pt-5">
               <h3 className="font-semibold text-strong mb-2">Coach Rankings (aggregate)</h3>
               <p className="text-soft leading-relaxed mb-3">
-                The aggregate uses <a className="text-mid font-medium underline hover:text-strong transition-colors" href="https://en.wikipedia.org/wiki/Borda_count" rel="noopener noreferrer" target="_blank">Borda count</a>: for each position, a coach's rankings are converted to points based on how many players they ranked. The 1st-place player gets the most points, 2nd gets one fewer, and so on.
+                The aggregate uses <a className="text-mid font-medium underline hover:text-strong transition-colors" href="https://en.wikipedia.org/wiki/Borda_count" rel="noopener noreferrer" target="_blank">Borda count</a> with a fixed scale: 1st place always earns 8 points, 2nd always earns 7, and so on — regardless of how many players a coach ranked. This keeps scores comparable across coaches.
               </p>
               <div className="bg-well rounded-lg px-4 py-3 space-y-1 text-xs font-mono text-soft">
-                <div>1st of 4 ranked → <span className="text-mid">4 pts</span></div>
-                <div>2nd of 4 ranked → <span className="text-mid">3 pts</span></div>
-                <div>3rd of 4 ranked → <span className="text-mid">2 pts</span></div>
-                <div>4th of 4 ranked → <span className="text-mid">1 pt</span></div>
+                <div>1st place → <span className="text-mid">8 pts</span></div>
+                <div>2nd place → <span className="text-mid">7 pts</span></div>
+                <div>3rd place → <span className="text-mid">6 pts</span></div>
+                <div>4th place → <span className="text-mid">5 pts</span></div>
+                <div className="text-ghost">…and so on</div>
               </div>
               <p className="text-soft leading-relaxed mt-3">
-                Each player's points are summed across all coaches who ranked them. The top 3 players per position are shown, along with how many coaches included that player.
+                Each player's points are summed across all coaches who ranked them. The top 3 players per position are shown by default.
               </p>
             </div>
           </div>
