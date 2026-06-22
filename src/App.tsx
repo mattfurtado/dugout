@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { Layout } from './components/layout/Layout';
 import RequireAuth from './components/auth/RequireAuth';
 import { useAuthStore } from './store/authStore';
@@ -78,6 +79,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <Analytics />
       <TitleManager />
       <DataLoader>
         <Routes>
