@@ -127,9 +127,10 @@ function PositionList({
   onRemove: (position: LineupPosition, playerId: string) => void;
   onAdd: (position: LineupPosition) => void;
 }) {
+  const isMobile = window.matchMedia('(pointer: coarse)').matches;
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(TouchSensor, { activationConstraint: { delay: 500, tolerance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: isMobile ? 1000 : 500, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
