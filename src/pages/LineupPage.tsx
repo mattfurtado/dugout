@@ -14,6 +14,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useAuthStore } from '../store/authStore';
 import { useStore } from '../store';
 import { EmptyState } from '../components/ui/EmptyState';
+import { H1, H2, H3 } from '../components/ui/Heading';
 import { Modal } from '../components/ui/Modal';
 import { Spinner } from '../components/ui/Spinner';
 import type { LineupPosition, LineupRankings, Player } from '../types';
@@ -151,37 +152,35 @@ function PositionList({
   };
 
   return (
-    <div className="bg-panel border border-subtle rounded-xl px-2 sm:px-4 py-3">
-      <div className="flex items-start gap-2 sm:gap-4">
-        <span className="text-xs font-bold text-soft w-6 pt-0.5 shrink-0 text-right">{position}</span>
-        <div className="flex-1 space-y-2 min-w-0">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={ranked.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-              {ranked.map((player, i) => (
-                <SortablePlayerRow
-                  key={player.id}
-                  editing={editing}
-                  player={player}
-                  rank={i}
-                  isFirst={i === 0}
-                  isLast={i === ranked.length - 1}
-                  onRemove={() => onRemove(position, player.id)}
-                  onMoveUp={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i - 1))}
-                  onMoveDown={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i + 1))}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-          {editing && ranked.length < 8 && (
-            <button
-              onClick={() => onAdd(position)}
-              className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-red-600/50 hover:text-red-500 rounded-lg px-2.5 py-1 transition-colors"
-            >
-              <Plus size={11} />
-              Add player
-            </button>
-          )}
-        </div>
+    <div>
+      <H3 className={['mb-1.5', 'px-1']}>{position}</H3>
+      <div className="bg-panel border border-subtle rounded-xl px-3 sm:px-4 py-3 space-y-2">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={ranked.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+            {ranked.map((player, i) => (
+              <SortablePlayerRow
+                key={player.id}
+                editing={editing}
+                player={player}
+                rank={i}
+                isFirst={i === 0}
+                isLast={i === ranked.length - 1}
+                onRemove={() => onRemove(position, player.id)}
+                onMoveUp={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i - 1))}
+                onMoveDown={() => onReorder(position, arrayMove(ranked.map(p => p.id), i, i + 1))}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+        {editing && ranked.length < 8 && (
+          <button
+            onClick={() => onAdd(position)}
+            className="flex items-center gap-1.5 text-xs font-medium text-soft bg-well border border-firm hover:border-red-600/50 hover:text-red-500 rounded-lg px-2.5 py-1 transition-colors"
+          >
+            <Plus size={11} />
+            Add player
+          </button>
+        )}
       </div>
     </div>
   );
@@ -366,7 +365,7 @@ function AggregateView({ preview, seasonId, roster }: { preview: boolean; season
         if (!hasAny) return null;
         return (
           <div key={group.label}>
-            <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">{group.label}</h2>
+            <H2 className="mb-2">{group.label}</H2>
             <div className="space-y-2">
               {group.positions.map((pos) => {
                 const entries = aggregate[pos];
@@ -510,7 +509,7 @@ export function LineupPage() {
       <div className="mb-5 pt-2">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-strong">Lineup Ranker</h1>
+            <H1>Lineup Ranker</H1>
             <button
               aria-label="How it works"
               className="text-ghost hover:text-soft transition-colors"
@@ -577,7 +576,7 @@ export function LineupPage() {
           <div className="space-y-6">
             {POSITION_GROUPS.map((group) => (
               <div key={group.label}>
-                <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">{group.label}</h2>
+                <H2 className="mb-2">{group.label}</H2>
                 <div className="space-y-2">
                   {group.positions.map((position) => {
                     const ranked = (local[position] ?? [])
@@ -603,7 +602,7 @@ export function LineupPage() {
               <div>
                 {warnings.length > 0 ? (
                   <div className="space-y-1.5">
-                    <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Warnings</h2>
+                    <H2 className="mb-2">Warnings</H2>
                     {warnings.map((w, i) => (
                       <div key={i} className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
                         <WarningCircle size={13} className="shrink-0 mt-0.5" />
@@ -637,7 +636,7 @@ export function LineupPage() {
         <Modal onClose={() => setShowHelp(false)} title="How it works">
           <div className="space-y-5 text-sm">
             <div>
-              <h3 className="font-semibold text-strong mb-2">Assignment requirements</h3>
+              <H3 className="mb-2">Assignment requirements</H3>
               <p className="text-soft leading-relaxed">
                 Each player you rank must appear in at least one <span className="text-mid font-medium">infield position</span> (C, 1B, 2B, 3B, or SS) and at least one <span className="text-mid font-medium">outfield position</span> (LF, CF, or RF). Players missing either will show a warning until the gap is filled.
               </p>
@@ -646,7 +645,7 @@ export function LineupPage() {
               </p>
             </div>
             <div className="border-t border-subtle pt-5">
-              <h3 className="font-semibold text-strong mb-2">Coach Rankings (aggregate)</h3>
+              <H3 className="mb-2">Coach Rankings (aggregate)</H3>
               <p className="text-soft leading-relaxed mb-3">
                 The aggregate uses <a className="text-mid font-medium underline hover:text-strong transition-colors" href="https://en.wikipedia.org/wiki/Borda_count" rel="noopener noreferrer" target="_blank">Borda count</a> with a fixed scale: 1st place always earns 8 points, 2nd always earns 7, and so on — regardless of how many players a coach ranked. This keeps scores comparable across coaches.
               </p>

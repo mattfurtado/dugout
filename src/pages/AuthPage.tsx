@@ -4,6 +4,7 @@ import { Baseball } from '@phosphor-icons/react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/Button';
 import { Divider } from '../components/ui/Divider';
+import { H1 } from '../components/ui/Heading';
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -56,9 +57,9 @@ export default function AuthPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h1 className="text-lg font-semibold text-strong text-center mb-6">
+            <H1 className="mb-6">
               {isSignUp ? 'Create your account' : 'Sign in to Dugout'}
-            </h1>
+            </H1>
 
             {error && (
               <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded-lg px-3 py-2">

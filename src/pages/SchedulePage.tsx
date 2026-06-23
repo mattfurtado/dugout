@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { Button } from '../components/ui/Button';
 import { Divider } from '../components/ui/Divider';
 import { EmptyState } from '../components/ui/EmptyState';
+import { H2 } from '../components/ui/Heading';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -348,7 +349,7 @@ export function SchedulePage() {
         <div className="space-y-6">
           {upcoming.length > 0 && (
             <div>
-              <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Upcoming</h2>
+              <H2 className="mb-2">Upcoming</H2>
               <div className="space-y-2">
                 {upcoming.map((g) => <GameCard g={g} key={g.id} />)}
               </div>
@@ -357,7 +358,7 @@ export function SchedulePage() {
 
           {past.length > 0 && (
             <div>
-              <h2 className="text-xs font-semibold text-soft uppercase tracking-widest mb-2">Past Games</h2>
+              <H2 className="mb-2">Past Games</H2>
               <div className="space-y-2">
                 {[...past].reverse().map((g) => <GameCard g={g} key={g.id} />)}
               </div>

@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { H1, H2 } from './Heading';
 
 interface Props {
   title: string;
@@ -12,7 +13,7 @@ export function PageHeader({ title, subtitle, action, size = 'lg', className = '
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <div>
-        <h1 className={`font-bold text-strong ${size === 'lg' ? 'text-lg' : 'text-base'}`}>{title}</h1>
+        {size === 'lg' ? <H1>{title}</H1> : <H2>{title}</H2>}
         {subtitle && <p className="text-xs text-soft">{subtitle}</p>}
       </div>
       {action}

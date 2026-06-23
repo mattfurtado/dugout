@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Baseball } from '@phosphor-icons/react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import { H1, H2 } from '../components/ui/Heading';
 import { Spinner } from '../components/ui/Spinner';
 
 type InviteDetails = {
@@ -109,7 +110,7 @@ export function InvitePage() {
 
         {alreadyMember && details && (
           <div className="bg-panel border border-subtle rounded-2xl p-6 text-center">
-            <h2 className="text-base font-bold text-strong mb-1">You're already a coach</h2>
+            <H2 className="mb-1">You're already a coach</H2>
             <p className="text-sm text-soft mb-5">You've already joined {teamLabel}.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}
@@ -128,7 +129,7 @@ export function InvitePage() {
 
         {details && !done && !accepting && !alreadyMember && (
           <div className="bg-panel border border-subtle rounded-2xl p-6">
-            <h1 className="text-base font-bold text-strong">{teamLabel}</h1>
+            <H1>{teamLabel}</H1>
             {subLabel && <p className="text-xs text-soft mt-0.5">{subLabel}</p>}
             <p className="text-sm text-soft mt-4 mb-3">You've been invited to join as a coach. Choose your role:</p>
 
@@ -194,7 +195,7 @@ export function InvitePage() {
             <div className="w-12 h-12 rounded-full bg-red-600/15 flex items-center justify-center mx-auto mb-4">
               <Baseball size={24} weight="fill" className="text-red-500" />
             </div>
-            <h2 className="text-base font-bold text-strong mb-1">You're in!</h2>
+            <H2 className="mb-1">You're in!</H2>
             <p className="text-sm text-soft mb-5">You've joined {teamLabel} as {role}.</p>
             <button
               onClick={() => navigate(`/seasons/${details.season_id}`)}

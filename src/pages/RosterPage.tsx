@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { H2 } from '../components/ui/Heading';
 import type { Player, Position, Coach, CoachRole } from '../types';
 
 const ALL_POSITIONS: Position[] = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH', 'Bench'];
@@ -195,7 +196,7 @@ export function RosterPage() {
       <div>
         <div className="flex items-center justify-between mb-3 pt-2">
           <div>
-            <h2 className="text-base font-bold text-strong">Coaches</h2>
+            <H2>Coaches</H2>
             <p className="text-xs text-soft">{staff.length} staff member{staff.length !== 1 ? 's' : ''}</p>
           </div>
           {isOwner && (
@@ -267,7 +268,7 @@ export function RosterPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-base font-bold text-strong">Players</h2>
+            <H2>Players</H2>
             <p className="text-xs text-soft">{roster.length} player{roster.length !== 1 ? 's' : ''}</p>
           </div>
           {canManageRoles && (
