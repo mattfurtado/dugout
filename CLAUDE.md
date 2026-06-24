@@ -1,5 +1,9 @@
 # Dugout — Claude Rules
 
+## Session context
+
+At the start of each conversation, read all memory files listed in `/Users/mattfurtado/.claude/projects/-Users-mattfurtado-dev-dugout/memory/MEMORY.md` — especially session summaries — before doing any work. This ensures continuity across conversations.
+
 ## Code style
 
 ### Imports
