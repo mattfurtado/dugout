@@ -2,7 +2,9 @@
 
 ## Session context
 
-At the start of each conversation, read all memory files listed in `/Users/mattfurtado/.claude/projects/-Users-mattfurtado-dev-dugout/memory/MEMORY.md` — especially session summaries — before doing any work. This ensures continuity across conversations.
+At the start of each conversation, read all memory files listed in `/Users/mattfurtado/.claude/projects/-Users-mattfurtado-dev-dugout/memory/MEMORY.md` — especially session summaries — before doing any work.
+
+At the end of each conversation, write a session summary memory file named `session_YYYY_MM_DD.md` (using today's date) covering what was built, changed, or decided. Update `MEMORY.md` to index it. If a summary for today already exists, append to it rather than creating a new file.
 
 ## Code style
 
